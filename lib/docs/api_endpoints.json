@@ -1,0 +1,143 @@
+{
+  "api_endpoints": {
+    "base_url": "https://mateib.ro",
+    "authentication": {
+      "endpoint": "/idexauth.php",
+      "method": "POST",
+      "description": "User login authentication"
+    },
+    "location_list": {
+      "endpoint": "/idexroluri.php",
+      "method": "POST", 
+      "description": "Get list of locations for dropdown"
+    },
+    "search_roles": {
+      "endpoint": "/idexroluri.php",
+      "method": "POST",
+      "description": "Search for roles by location and address"
+    },
+    "update_reading": {
+      "endpoint": "/idexadauga.php", 
+      "method": "POST",
+      "description": "Update meter reading values"
+    }
+  },
+  "request_response_examples": {
+    "location_list": {
+      "description": "Get locations for dropdown (sticky up position)",
+      "response": {
+        "localit": [
+          {
+            "id_loc": 23,
+            "loc": "Tinca"
+          },
+          {
+            "id_loc": 24, 
+            "loc": "Toboliu"
+          }
+        ]
+      },
+      "implementation_location": "Location selection screen - dropdown component"
+    },
+    "search_roles": {
+      "description": "Search for roles by location and address",
+      "request": {
+        "id_loc": "",
+        "str": "Belsugului", 
+        "nr_dom": "5",
+        "rol": "93",
+        "time": "timestamp()",
+        "session": 1245264824
+      },
+      "response": {
+        "session": 1245264824,
+        "err": 0,
+        "msg_err": "Succes",
+        "count_roles": 1,
+        "date": [
+          {
+            "id_rol": 1,
+            "rol": 93,
+            "pers": {
+              "nume": "Berescu",
+              "pren": "Alex", 
+              "cnp": 2312321321321,
+              "tip_pers": 1
+            },
+            "addr": {
+              "loc": "Oradea",
+              "str": "Belsugului",
+              "nr_dom": "5"
+            },
+            "tax": [
+              {
+                "id_tip_taxa": 1,
+                "id_tax2rol": 5,
+                "id_tax2bord": 12,
+                "nume_taxa": "Apa",
+                "unit_masura": "mp3",
+                "val_old": 1000,
+                "data_citire_old": "0000-00-00",
+                "tip_citire_old": "C",
+                "val_new_p": 56,
+                "val_new_e": 70
+              }
+            ]
+          }
+        ]
+      },
+      "implementation_location": "Search screen - results list component",
+      "data_structure_notes": {
+        "tip_pers": "1 = PF (Persoana Fizica), 2 = PJ (Persoana Juridica)",
+        "tip_citire_old": "C = Citire (default), E = Estimat, P = Pausal, F = Fara facturare, X = Neutilizat inca"
+      }
+    },
+    "update_reading": {
+      "description": "Update meter reading values",
+      "request": {
+        "session": 1245264824,
+        "time": "timestamp()",
+        "id_rol": 1,
+        "id_tip_taxa": 1,
+        "id_tax2rol": 5,
+        "id_tax2bord": 12,
+        "val_new": 5,
+        "data_citire_new": "0000-00-00",
+        "tip_citire_old": "P"
+      },
+      "response": {
+        "session": 1245264824,
+        "err": 0,
+        "msg_err": "Succes"
+      },
+      "implementation_location": "Meter reading update screen - form submission",
+      "business_logic_notes": {
+        "automatic_value_selection": "If tip_citire_old is 'P' or 'E', automatically use val_new_e or val_new_p values in val_new",
+        "error_handling": "If err=1, display msg_err message on screen"
+      }
+    }
+  },
+  "implementation_guide": {
+    "screen_flow": [
+      "1. Login Screen (authentication)",
+      "2. Location Selection Screen (dropdown with locations)",
+      "3. Search Screen (enter address details)",
+      "4. Results Screen (display found roles)",
+      "5. Meter Reading Screen (update individual readings)"
+    ],
+    "data_models_needed": [
+      "Location (id_loc, loc)",
+      "Person (nume, pren, cnp, tip_pers)", 
+      "Address (loc, str, nr_dom)",
+      "Tax (id_tip_taxa, nume_taxa, unit_masura, val_old, val_new_p, val_new_e)",
+      "Role (id_rol, rol, pers, addr, tax)"
+    ],
+    "ui_components_needed": [
+      "Location dropdown (sticky up position)",
+      "Address input form",
+      "Search results list",
+      "Meter reading form",
+      "Error message display"
+    ]
+  }
+}

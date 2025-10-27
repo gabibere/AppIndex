@@ -1,0 +1,86 @@
+name: appindex
+description: "A modern Flutter app for managing house indexes and meters with beautiful animations and intuitive UX."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # UI and Animations
+  cupertino_icons: ^1.0.8
+  flutter_svg: ^2.0.9
+  lottie: ^3.1.2
+  shimmer: ^3.0.0
+  glassmorphism: ^3.0.0
+  
+  # State Management
+  provider: ^6.1.1
+  
+  # HTTP and API
+  http: ^1.1.0
+  dio: ^5.3.2
+  
+  # Local Storage
+  shared_preferences: ^2.2.2
+  sqflite: ^2.3.0
+  
+  # Security
+  flutter_secure_storage: ^9.0.0
+  crypto: ^3.0.3
+  encrypt: ^5.0.1
+  
+  # Utilities
+  intl: ^0.20.2
+  connectivity_plus: ^5.0.2
+  device_info_plus: ^9.1.1
+  permission_handler: ^11.0.1
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
+  
+  # UI Components
+  cached_network_image: ^3.3.0
+  flutter_staggered_animations: ^1.1.1
+  auto_size_text: ^3.0.0
+  
+  # Localization
+  flutter_localizations:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/l10n/
+
+# App Icon Configuration
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icons/logo.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icons/logo.png"
+    background_color: "#6366F1"
+    theme_color: "#6366F1"
+  windows:
+    generate: true
+    image_path: "assets/icons/logo.png"
+    icon_size: 48
+  macos:
+    generate: true
+    image_path: "assets/icons/logo.png"
