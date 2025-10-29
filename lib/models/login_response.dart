@@ -17,8 +17,9 @@ class LoginResponse {
     return LoginResponse(
       session: json['session']?.toString() ?? '',
       err: json['err'] ?? 1,
-      msgErr: json['msg_err'] ?? 'Error',
-      localit: (json['localit'] as List<dynamic>?)
+      msgErr: json['msg_err'] ?? '',
+      localit:
+          (json['localit'] as List<dynamic>?)
               ?.map((locJson) => Locality.fromJson(locJson))
               .toList() ??
           [],

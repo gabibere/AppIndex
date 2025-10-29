@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -17,6 +18,17 @@ import 'utils/debug_logger.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Configure system UI for transparent navigation bars
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
+
   // Initialize services
   await LocalizationService.loadLanguage('ro');
   ApiService.initialize();
@@ -31,13 +43,9 @@ class AppIndex extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider()..initialize(),
-        ),
+        ChangeNotifierProvider(create: (_) => AuthProvider()..initialize()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
-        ChangeNotifierProvider(
-          create: (_) => LocationProvider()..initialize(),
-        ),
+        ChangeNotifierProvider(create: (_) => LocationProvider()..initialize()),
         ChangeNotifierProvider(
           create: (_) => ReadingDateProvider()..initialize(),
         ),
@@ -51,9 +59,7 @@ class AppIndex extends StatelessWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [
-          Locale('ro', ''),
-        ],
+        supportedLocales: const [Locale('ro', '')],
         locale: const Locale('ro', ''),
         initialRoute: '/',
         routes: {
@@ -87,13 +93,15 @@ class AppIndex extends StatelessWidget {
             );
           };
 
-          // Wrap with keyboard dismissal functionality
-          return GestureDetector(
-            onTap: () {
-              // Dismiss keyboard when tapping anywhere on the screen
-              FocusScope.of(context).unfocus();
-            },
-            child: child!,
+          // Wrap with SafeArea and keyboard dismissal functionality
+          return SafeArea(
+            child: GestureDetector(
+              onTap: () {
+                // Dismiss keyboard when tapping anywhere on the screen
+                FocusScope.of(context).unfocus();
+              },
+              child: child!,
+            ),
           );
         },
       ),
@@ -143,16 +151,14 @@ class AppIndex extends StatelessWidget {
           backgroundColor: const Color(AppConfig.primaryColor),
           foregroundColor: const Color(AppConfig.surfaceColor),
           elevation: 2,
-          shadowColor:
-              const Color(AppConfig.primaryColor).withValues(alpha: 0.3),
+          shadowColor: const Color(
+            AppConfig.primaryColor,
+          ).withValues(alpha: 0.3),
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConfig.borderRadius),
           ),
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
 
@@ -168,10 +174,7 @@ class AppIndex extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConfig.borderRadius),
           ),
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
 
@@ -181,15 +184,11 @@ class AppIndex extends StatelessWidget {
         fillColor: const Color(AppConfig.surfaceColor),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-          borderSide: const BorderSide(
-            color: Color(AppConfig.secondaryColor),
-          ),
+          borderSide: const BorderSide(color: Color(AppConfig.secondaryColor)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppConfig.borderRadius),
-          borderSide: const BorderSide(
-            color: Color(AppConfig.secondaryColor),
-          ),
+          borderSide: const BorderSide(color: Color(AppConfig.secondaryColor)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppConfig.borderRadius),
@@ -202,8 +201,10 @@ class AppIndex extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppConfig.borderRadius),
           borderSide: const BorderSide(color: Color(AppConfig.errorColor)),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         labelStyle: const TextStyle(
           color: Color(AppConfig.textSecondaryColor),
           fontWeight: FontWeight.w500,
@@ -237,14 +238,8 @@ class AppIndex extends StatelessWidget {
           fontWeight: FontWeight.w500,
           color: Color(AppConfig.textColor),
         ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          color: Color(AppConfig.textColor),
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          color: Color(AppConfig.textColor),
-        ),
+        bodyLarge: TextStyle(fontSize: 16, color: Color(AppConfig.textColor)),
+        bodyMedium: TextStyle(fontSize: 14, color: Color(AppConfig.textColor)),
         bodySmall: TextStyle(
           fontSize: 12,
           color: Color(AppConfig.textSecondaryColor),

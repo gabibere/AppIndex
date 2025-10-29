@@ -5,6 +5,7 @@ import '../models/role.dart';
 import '../models/tax.dart';
 import '../services/localization_service.dart';
 import '../services/api_service.dart';
+import '../services/error_handling_service.dart';
 import '../providers/reading_date_provider.dart';
 import '../utils/debug_logger.dart';
 
@@ -46,8 +47,10 @@ class _WorkModalState extends State<WorkModal> {
 
   void _initializeTaxData() {
     // Get global reading date from provider
-    final readingDateProvider =
-        Provider.of<ReadingDateProvider>(context, listen: false);
+    final readingDateProvider = Provider.of<ReadingDateProvider>(
+      context,
+      listen: false,
+    );
     final globalReadingDate = readingDateProvider.selectedDate;
 
     // Initialize with actual tax data from the role
@@ -75,7 +78,7 @@ class _WorkModalState extends State<WorkModal> {
         'water',
         'impozit',
         'heating',
-        'internet'
+        'internet',
       ];
 
       for (final taxType in taxTypes) {
@@ -120,10 +123,11 @@ class _WorkModalState extends State<WorkModal> {
       'water': 10,
       'impozit': 30,
       'heating': 25,
-      'internet': 5
+      'internet': 5,
     };
-    final date =
-        DateTime.now().subtract(Duration(days: daysAgo[taxType] ?? 15));
+    final date = DateTime.now().subtract(
+      Duration(days: daysAgo[taxType] ?? 15),
+    );
     return '${date.day}/${date.month}/${date.year}';
   }
 
@@ -151,93 +155,105 @@ class _WorkModalState extends State<WorkModal> {
           topRight: Radius.circular(24),
         ),
       ),
-      child: Column(
-        children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: const Color(AppConfig.textSecondaryColor)
-                  .withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
+      child: SafeArea(
+        top:
+            false, // Don't add top padding since we want the modal to go to the top
+        bottom: true, // Add bottom padding to avoid navigation bar
+        child: Column(
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(
+                  AppConfig.textSecondaryColor,
+                ).withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
 
-          // Role details section (compact)
-          if (widget.role != null) _buildCompactRoleDetails(),
+            // Role details section (compact)
+            if (widget.role != null) _buildCompactRoleDetails(),
 
-          // Tax containers
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  // Show only taxes that exist in the API response
-                  if (widget.role != null && widget.role!.tax.isNotEmpty) ...[
-                    ...widget.role!.tax.map((tax) {
-                      final taxType = _getTaxTypeFromName(tax.numeTaxa);
-                      return Column(
-                        children: [
-                          _buildTaxContainer(
-                            _getTaxDisplayName(tax.numeTaxa),
-                            taxType,
-                            _getTaxIcon(taxType),
-                            tax.unitMasura,
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                      );
-                    }),
-                  ] else ...[
-                    // Fallback to all tax types if no role data
-                    _buildTaxContainer(
+            // Tax containers
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    // Show only taxes that exist in the API response
+                    if (widget.role != null && widget.role!.tax.isNotEmpty) ...[
+                      ...widget.role!.tax.map((tax) {
+                        final taxType = _getTaxTypeFromName(tax.numeTaxa);
+                        return Column(
+                          children: [
+                            _buildTaxContainer(
+                              _getTaxDisplayName(tax.numeTaxa),
+                              taxType,
+                              _getTaxIcon(taxType),
+                              tax.unitMasura,
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        );
+                      }),
+                    ] else ...[
+                      // Fallback to all tax types if no role data
+                      _buildTaxContainer(
                         LocalizationService.getString('work.electricity'),
                         'electricity',
                         Icons.electrical_services,
-                        'kWh'),
-                    const SizedBox(height: 16),
-                    _buildTaxContainer(
+                        'kWh',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTaxContainer(
                         LocalizationService.getString('work.gas'),
                         'gas',
                         Icons.local_fire_department,
-                        'm³'),
-                    const SizedBox(height: 16),
-                    _buildTaxContainer(
+                        'm³',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTaxContainer(
                         LocalizationService.getString('work.water'),
                         'water',
                         Icons.water_drop,
-                        'm³'),
-                    const SizedBox(height: 16),
-                    _buildTaxContainer(
+                        'm³',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTaxContainer(
                         LocalizationService.getString('work.impozit'),
                         'impozit',
                         Icons.account_balance,
-                        'RON'),
-                    const SizedBox(height: 16),
-                    _buildTaxContainer(
+                        'RON',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTaxContainer(
                         LocalizationService.getString('work.heating'),
                         'heating',
                         Icons.thermostat,
-                        'Gcal'),
-                    const SizedBox(height: 16),
-                    _buildTaxContainer(
+                        'Gcal',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTaxContainer(
                         LocalizationService.getString('work.internet'),
                         'internet',
                         Icons.wifi,
-                        'RON'),
-                    const SizedBox(height: 16),
-                  ],
+                        'RON',
+                      ),
+                      const SizedBox(height: 16),
+                    ],
 
-                  // Back button
-                  _buildBackButton(),
-                  const SizedBox(height: 24),
-                ],
+                    // Back button
+                    _buildBackButton(),
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -297,7 +313,11 @@ class _WorkModalState extends State<WorkModal> {
   }
 
   Widget _buildTaxContainer(
-      String title, String taxType, IconData icon, String unit) {
+    String title,
+    String taxType,
+    IconData icon,
+    String unit,
+  ) {
     final hasError = _fieldErrors[taxType] ?? false;
     final isSaved = _isSaved[taxType] ?? false;
 
@@ -331,8 +351,9 @@ class _WorkModalState extends State<WorkModal> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(AppConfig.primaryColor)
-                      .withValues(alpha: 0.1),
+                  color: const Color(
+                    AppConfig.primaryColor,
+                  ).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -354,8 +375,10 @@ class _WorkModalState extends State<WorkModal> {
               ),
               if (isSaved)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(AppConfig.successColor),
                     borderRadius: BorderRadius.circular(12),
@@ -363,11 +386,7 @@ class _WorkModalState extends State<WorkModal> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 12,
-                      ),
+                      const Icon(Icons.check, color: Colors.white, size: 12),
                       const SizedBox(width: 4),
                       Text(
                         LocalizationService.getString('work.saved'),
@@ -408,18 +427,21 @@ class _WorkModalState extends State<WorkModal> {
                   children: [
                     Expanded(
                       child: _buildInfoItem(
-                          LocalizationService.getString('work.date'),
-                          _lastDates[taxType]!),
+                        LocalizationService.getString('work.date'),
+                        _lastDates[taxType]!,
+                      ),
                     ),
                     Expanded(
                       child: _buildInfoItem(
-                          LocalizationService.getString('work.type'),
-                          _lastTypes[taxType]!),
+                        LocalizationService.getString('work.type'),
+                        _lastTypes[taxType]!,
+                      ),
                     ),
                     Expanded(
                       child: _buildInfoItem(
-                          LocalizationService.getString('work.value'),
-                          '${_lastReadings[taxType]!} $unit'),
+                        LocalizationService.getString('work.value'),
+                        '${_lastReadings[taxType]!} $unit',
+                      ),
                     ),
                   ],
                 ),
@@ -435,12 +457,14 @@ class _WorkModalState extends State<WorkModal> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color:
-                    const Color(AppConfig.successColor).withValues(alpha: 0.1),
+                color: const Color(
+                  AppConfig.successColor,
+                ).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(AppConfig.successColor)
-                      .withValues(alpha: 0.3),
+                  color: const Color(
+                    AppConfig.successColor,
+                  ).withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
@@ -456,7 +480,8 @@ class _WorkModalState extends State<WorkModal> {
                       const SizedBox(width: 8),
                       Text(
                         LocalizationService.getString(
-                            'work.current_reading_saved'),
+                          'work.current_reading_saved',
+                        ),
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -470,18 +495,21 @@ class _WorkModalState extends State<WorkModal> {
                     children: [
                       Expanded(
                         child: _buildSavedCurrentItem(
-                            LocalizationService.getString('work.date'),
-                            _savedDates[taxType]!),
+                          LocalizationService.getString('work.date'),
+                          _savedDates[taxType]!,
+                        ),
                       ),
                       Expanded(
                         child: _buildSavedCurrentItem(
-                            LocalizationService.getString('work.type'),
-                            _savedTypes[taxType]!),
+                          LocalizationService.getString('work.type'),
+                          _savedTypes[taxType]!,
+                        ),
                       ),
                       Expanded(
                         child: _buildSavedCurrentItem(
-                            LocalizationService.getString('work.value'),
-                            '${_savedValues[taxType]!} $unit'),
+                          LocalizationService.getString('work.value'),
+                          '${_savedValues[taxType]!} $unit',
+                        ),
                       ),
                     ],
                   ),
@@ -508,8 +536,9 @@ class _WorkModalState extends State<WorkModal> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: const Color(AppConfig.primaryColor)
-                        .withValues(alpha: 0.3),
+                    color: const Color(
+                      AppConfig.primaryColor,
+                    ).withValues(alpha: 0.3),
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -545,8 +574,9 @@ class _WorkModalState extends State<WorkModal> {
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: const Color(AppConfig.primaryColor)
-                            .withValues(alpha: 0.3),
+                        color: const Color(
+                          AppConfig.primaryColor,
+                        ).withValues(alpha: 0.3),
                       ),
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -615,8 +645,9 @@ class _WorkModalState extends State<WorkModal> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : Text(
@@ -678,10 +709,7 @@ class _WorkModalState extends State<WorkModal> {
         ),
         child: Text(
           LocalizationService.getString('work.back'),
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -692,8 +720,9 @@ class _WorkModalState extends State<WorkModal> {
       context: context,
       initialDate: _readingDates[taxType]!,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now()
-          .add(const Duration(days: 365)), // Allow future dates up to 1 year
+      lastDate: DateTime.now().add(
+        const Duration(days: 365),
+      ), // Allow future dates up to 1 year
     );
 
     if (picked != null && picked != _readingDates[taxType]) {
@@ -726,16 +755,15 @@ class _WorkModalState extends State<WorkModal> {
     final bool? shouldSave = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color:
-                    const Color(AppConfig.primaryColor).withValues(alpha: 0.1),
+                color: const Color(
+                  AppConfig.primaryColor,
+                ).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -747,8 +775,10 @@ class _WorkModalState extends State<WorkModal> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                LocalizationService.getString('work.save_reading_title',
-                    params: {'type': _getTaxTypeTranslation(taxType)}),
+                LocalizationService.getString(
+                  'work.save_reading_title',
+                  params: {'type': _getTaxTypeTranslation(taxType)},
+                ),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -773,12 +803,14 @@ class _WorkModalState extends State<WorkModal> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color:
-                    const Color(AppConfig.primaryColor).withValues(alpha: 0.05),
+                color: const Color(
+                  AppConfig.primaryColor,
+                ).withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(AppConfig.primaryColor)
-                      .withValues(alpha: 0.2),
+                  color: const Color(
+                    AppConfig.primaryColor,
+                  ).withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -805,15 +837,21 @@ class _WorkModalState extends State<WorkModal> {
                   ),
                   const SizedBox(height: 12),
                   _buildDetailRow(
-                      LocalizationService.getString('work.tax_type'),
-                      _getTaxTypeTranslation(taxType)),
+                    LocalizationService.getString('work.tax_type'),
+                    _getTaxTypeTranslation(taxType),
+                  ),
                   _buildDetailRow(
-                      LocalizationService.getString('work.value'), value),
-                  _buildDetailRow(LocalizationService.getString('work.date'),
-                      '${_readingDates[taxType]!.day}/${_readingDates[taxType]!.month}/${_readingDates[taxType]!.year}'),
+                    LocalizationService.getString('work.value'),
+                    value,
+                  ),
                   _buildDetailRow(
-                      LocalizationService.getString('work.reading_type'),
-                      _readingTypes[taxType]!),
+                    LocalizationService.getString('work.date'),
+                    '${_readingDates[taxType]!.day}/${_readingDates[taxType]!.month}/${_readingDates[taxType]!.year}',
+                  ),
+                  _buildDetailRow(
+                    LocalizationService.getString('work.reading_type'),
+                    _readingTypes[taxType]!,
+                  ),
                 ],
               ),
             ),
@@ -852,10 +890,7 @@ class _WorkModalState extends State<WorkModal> {
             ),
             child: Text(
               LocalizationService.getString('work.save'),
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
           ),
         ],
@@ -881,7 +916,7 @@ class _WorkModalState extends State<WorkModal> {
       // Find the corresponding tax from the role data
       final tax = _findTaxForType(taxType);
       if (tax == null) {
-        _showError('Tax type not found in role data');
+        _showError('Tipul de taxă nu a fost găsit în datele rolului');
         return;
       }
 
@@ -934,14 +969,20 @@ class _WorkModalState extends State<WorkModal> {
         _showSuccessMessage('Reading saved successfully!');
 
         DebugLogger.success(
-            '✅ [WORK_MODAL] Reading saved successfully: ${response.msgErr}');
+          '✅ [WORK_MODAL] Reading saved successfully: ${response.msgErr}',
+        );
       } else {
         // API error
-        _showError('Failed to save reading: ${response.msgErr}');
+        _showError(
+          ErrorHandlingService.getApiErrorMessage({
+            'err': response.err,
+            'msg_err': response.msgErr,
+          }),
+        );
         DebugLogger.error('❌ [WORK_MODAL] API error: ${response.msgErr}');
       }
     } catch (e) {
-      _showError('Error saving reading: $e');
+      _showError(ErrorHandlingService.getFriendlyErrorMessage(e));
       DebugLogger.log('❌ [WORK_MODAL] Exception: $e');
     } finally {
       setState(() {
@@ -1276,8 +1317,10 @@ class _WorkModalState extends State<WorkModal> {
             width: hasError ? 2 : 2,
           ),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
         fillColor: (readingType.contains('(E)') ||
                 readingType.contains('(P)') ||
                 readingType.contains('(F)'))

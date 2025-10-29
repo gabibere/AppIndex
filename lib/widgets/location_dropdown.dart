@@ -238,8 +238,20 @@ class _LocationDropdownState extends State<LocationDropdown> {
                       child: _buildLocationText(),
                     ),
 
-                    // Loading or dropdown arrow
-                    if (_isLoading)
+                    // Clear button (if location is selected) or loading/error/arrow
+                    if (_selectedLocationId != null &&
+                        !_isLoading &&
+                        _errorMessage == null)
+                      IconButton(
+                        icon: const Icon(Icons.clear, size: 20),
+                        onPressed: () {
+                          _onLocationChanged(null, null);
+                        },
+                        tooltip: 'Șterge orașul',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      )
+                    else if (_isLoading)
                       const SizedBox(
                         width: 20,
                         height: 20,

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
+import '../services/error_handling_service.dart';
 
 class AuthProvider with ChangeNotifier {
   User? _user;
@@ -84,16 +85,22 @@ class AuthProvider with ChangeNotifier {
 
         _isAuthenticated = true;
         await _storeToken(
-            'mock_token_${DateTime.now().millisecondsSinceEpoch}');
+          'mock_token_${DateTime.now().millisecondsSinceEpoch}',
+        );
         await _storeUsername(username);
         notifyListeners();
         return true;
       } else {
-        _setError(result.msgErr);
+        _setError(
+          ErrorHandlingService.getApiErrorMessage({
+            'err': result.err,
+            'msg_err': result.msgErr,
+          }),
+        );
         return false;
       }
     } catch (e) {
-      _setError('Login failed: $e');
+      _setError(ErrorHandlingService.getFriendlyErrorMessage(e));
       return false;
     } finally {
       _setLoading(false);
@@ -143,7 +150,9 @@ class AuthProvider with ChangeNotifier {
 
   // Change password
   Future<bool> changePassword(
-      String currentPassword, String newPassword) async {
+    String currentPassword,
+    String newPassword,
+  ) async {
     _setLoading(true);
     try {
       // Simple password change validation

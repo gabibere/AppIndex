@@ -50,7 +50,7 @@ class AppConfig {
   static const double inputHeight = 56.0;
 
   // Debug Settings
-  static const bool showDebugInfo = true;
+  static const bool showDebugInfo = false;
   static const bool enableAnimations = true;
 
   // Mock Data Settings

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/role.dart';
 import '../services/api_service.dart';
+import '../services/error_handling_service.dart';
 import '../utils/debug_logger.dart';
 
 class SearchProvider with ChangeNotifier {
@@ -55,7 +56,9 @@ class SearchProvider with ChangeNotifier {
         ApiService.initialize();
       }
 
-      DebugLogger.search('🔍 [SEARCH_PROVIDER] Calling ApiService.searchRoles...');
+      DebugLogger.search(
+        '🔍 [SEARCH_PROVIDER] Calling ApiService.searchRoles...',
+      );
       // Search using the roles endpoint
       final response = await ApiService.searchRoles(
         idLoc: idLoc,
@@ -63,13 +66,17 @@ class SearchProvider with ChangeNotifier {
         nrDom: nrDom,
         rol: rol,
       );
-      DebugLogger.api('🔍 [SEARCH_PROVIDER] API call completed, response received');
+      DebugLogger.api(
+        '🔍 [SEARCH_PROVIDER] API call completed, response received',
+      );
 
       if (response.isSuccess) {
         DebugLogger.success(
-            '🔍 [SEARCH_PROVIDER] Search successful! Found ${response.countRoles} roles');
+          '🔍 [SEARCH_PROVIDER] Search successful! Found ${response.countRoles} roles',
+        );
         DebugLogger.search(
-            '🔍 [SEARCH_PROVIDER] Response data: ${response.date.length} items');
+          '🔍 [SEARCH_PROVIDER] Response data: ${response.date.length} items',
+        );
 
         if (clearPrevious) {
           _searchResults = response.date;
@@ -79,13 +86,21 @@ class SearchProvider with ChangeNotifier {
         _hasMoreData = response.date.length >= 20; // Assuming 20 items per page
 
         DebugLogger.search(
-            '🔍 [SEARCH_PROVIDER] Updated search results: ${_searchResults.length} total items');
+          '🔍 [SEARCH_PROVIDER] Updated search results: ${_searchResults.length} total items',
+        );
       } else {
-        DebugLogger.search('🔍 [SEARCH_PROVIDER] Search failed: ${response.msgErr}');
-        _setError(response.msgErr);
+        DebugLogger.search(
+          '🔍 [SEARCH_PROVIDER] Search failed: ${response.msgErr}',
+        );
+        _setError(
+          ErrorHandlingService.getApiErrorMessage({
+            'err': response.err,
+            'msg_err': response.msgErr,
+          }),
+        );
       }
     } catch (e) {
-      _setError('Search failed: $e');
+      _setError(ErrorHandlingService.getFriendlyErrorMessage(e));
     } finally {
       _isSearching = false;
       notifyListeners();

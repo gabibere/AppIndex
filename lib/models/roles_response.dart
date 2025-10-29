@@ -19,9 +19,10 @@ class RolesResponse {
     return RolesResponse(
       session: json['session']?.toString() ?? '',
       err: json['err'] ?? 1,
-      msgErr: json['msg_err'] ?? 'Error',
+      msgErr: json['msg_err'] ?? '',
       countRoles: json['count_roles'] ?? 0,
-      date: (json['date'] as List<dynamic>?)
+      date:
+          (json['date'] as List<dynamic>?)
               ?.map((roleJson) => Role.fromJson(roleJson))
               .toList() ??
           [],

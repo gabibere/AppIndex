@@ -151,6 +151,7 @@ class _SplashScreenState extends State<SplashScreen>
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
+        extendBody: true, // Allow content to extend behind system UI
         body: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(

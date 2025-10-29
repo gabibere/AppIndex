@@ -78,6 +78,53 @@ class _SearchSectionState extends State<SearchSection> {
     searchProvider.clearSearch();
   }
 
+  void _clearFieldAndSearch(String fieldType) {
+    setState(() {
+      // Clear the specific field
+      switch (fieldType) {
+        case 'street':
+          _streetController.clear();
+          break;
+        case 'houseNumber':
+          _houseNumberController.clear();
+          break;
+        case 'rol':
+          _rolController.clear();
+          break;
+        case 'location':
+          _selectedLocationId = null;
+          _selectedLocationName = null;
+          break;
+      }
+    });
+
+    // Clear search results and data
+    final searchProvider = Provider.of<SearchProvider>(context, listen: false);
+    searchProvider.clearSearch();
+
+    // Auto-search with remaining filters if other fields are filled
+    final locationId = _selectedLocationId ?? '';
+    final street = _streetController.text.trim();
+    final houseNumber = _houseNumberController.text.trim();
+    final rol = _rolController.text.trim();
+
+    // Check if any other fields are still filled
+    if (locationId.isNotEmpty ||
+        street.isNotEmpty ||
+        houseNumber.isNotEmpty ||
+        rol.isNotEmpty) {
+      DebugLogger.search('🔍 [CLEAR] Auto-searching with remaining filters');
+      searchProvider.search(
+        idLoc: locationId,
+        str: street,
+        nrDom: houseNumber,
+        rol: rol,
+      );
+    } else {
+      DebugLogger.search('🔍 [CLEAR] All fields cleared - no auto-search');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<SearchProvider>(
@@ -126,6 +173,11 @@ class _SearchSectionState extends State<SearchSection> {
               _selectedLocationId = locationId;
               _selectedLocationName = locationName;
             });
+
+            // If location was cleared, trigger clear and search logic
+            if (locationId == null) {
+              _clearFieldAndSearch('location');
+            }
           },
         ),
 
@@ -142,8 +194,7 @@ class _SearchSectionState extends State<SearchSection> {
                 ? IconButton(
                     icon: const Icon(Icons.clear, size: 20),
                     onPressed: () {
-                      _streetController.clear();
-                      setState(() {});
+                      _clearFieldAndSearch('street');
                     },
                     tooltip:
                         LocalizationService.getString('search.street_clear'),
@@ -172,8 +223,7 @@ class _SearchSectionState extends State<SearchSection> {
                 ? IconButton(
                     icon: const Icon(Icons.clear, size: 20),
                     onPressed: () {
-                      _houseNumberController.clear();
-                      setState(() {});
+                      _clearFieldAndSearch('houseNumber');
                     },
                     tooltip: 'Șterge numărul',
                   )
@@ -201,8 +251,7 @@ class _SearchSectionState extends State<SearchSection> {
                 ? IconButton(
                     icon: const Icon(Icons.clear, size: 20),
                     onPressed: () {
-                      _rolController.clear();
-                      setState(() {});
+                      _clearFieldAndSearch('rol');
                     },
                     tooltip: LocalizationService.getString('search.rol_clear'),
                   )

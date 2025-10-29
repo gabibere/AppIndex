@@ -127,6 +127,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true, // Allow content to extend behind system UI
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

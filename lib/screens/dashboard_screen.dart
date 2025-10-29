@@ -38,23 +38,17 @@ class _DashboardScreenState extends State<DashboardScreen>
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+    );
   }
 
   void _startAnimations() async {
@@ -82,9 +76,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             Text(LocalizationService.getString('auth.confirm_logout')),
           ],
         ),
-        content: Text(
-          LocalizationService.getString('auth.logout_message'),
-        ),
+        content: Text(LocalizationService.getString('auth.logout_message')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -128,6 +120,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(AppConfig.backgroundColor),
+      extendBody: true, // Allow content to extend behind system UI
       body: AnimatedBuilder(
         animation: Listenable.merge([_fadeController, _slideController]),
         builder: (context, child) {

@@ -50,15 +50,18 @@ class ApiService {
           final client = HttpClient();
           client.badCertificateCallback =
               (X509Certificate cert, String host, int port) {
-            DebugLogger.log('SSL: Bypassing certificate for $host:$port',
-                tag: 'SSL');
-            return true; // Accept all certificates in both debug and release
-          };
+                DebugLogger.log(
+                  'SSL: Bypassing certificate for $host:$port',
+                  tag: 'SSL',
+                );
+                return true; // Accept all certificates in both debug and release
+              };
           return client;
         };
       } catch (e) {
         DebugLogger.warning(
-            'SSL: Could not configure SSL for web platform: $e');
+          'SSL: Could not configure SSL for web platform: $e',
+        );
       }
     }
 
@@ -202,9 +205,11 @@ class ApiService {
         DebugLogger.device('📱 [DEVICE] === DEVICE INFORMATION LOG ===');
         DebugLogger.device('📱 [DEVICE] Using device identifier: $deviceId');
         DebugLogger.device(
-            '📱 [DEVICE] Identifier length: ${deviceId.length} characters');
+          '📱 [DEVICE] Identifier length: ${deviceId.length} characters',
+        );
         DebugLogger.device(
-            '📱 [DEVICE] Production mode: ${AppConfig.isProduction ? "PRODUCTION" : "DEVELOPMENT"}');
+          '📱 [DEVICE] Production mode: ${AppConfig.isProduction ? "PRODUCTION" : "DEVELOPMENT"}',
+        );
       }
 
       return deviceId;
@@ -262,14 +267,13 @@ class ApiService {
   }
 
   /// Login endpoint - /indexauth.php
-  static Future<LoginResponse> login(
-    String username,
-    String password,
-  ) async {
+  static Future<LoginResponse> login(String username, String password) async {
     // Hash password with MD5 for real API
     final hashedPassword = EncryptionService.hashPassword(password);
-    final hashedName = encript5(username,
-        '${AppConfig.passEncript5}${DateTime.now().day.toString().padLeft(2, '0')}');
+    final hashedName = encript5(
+      username,
+      '${AppConfig.passEncript5}${DateTime.now().day.toString().padLeft(2, '0')}',
+    );
 
     final requestData = {
       'user': hashedName,
@@ -283,7 +287,8 @@ class ApiService {
       DebugLogger.api('🔐 LOGIN REQUEST:');
       DebugLogger.log('📤 URL: ${AppConfig.baseUrl}/indexauth.php');
       DebugLogger.log(
-          '📤 Session being sent to server: ${requestData['session']}');
+        '📤 Session being sent to server: ${requestData['session']}',
+      );
       _printFormattedJson(json.encode(requestData));
     }
 
@@ -349,7 +354,7 @@ class ApiService {
             'localit': [
               {'id_loc': 23, 'loc': 'Tinca'},
               {'id_loc': 24, 'loc': 'Toboliu'},
-            ]
+            ],
           };
         }
       } else {
@@ -362,7 +367,7 @@ class ApiService {
       final loginResponse = LoginResponse(
         session: responseData['session']?.toString() ?? '',
         err: responseData['err'] ?? 1,
-        msgErr: responseData['msg_err'] ?? 'Error',
+        msgErr: responseData['msg_err'] ?? '',
         localit: localities,
       );
 
@@ -375,7 +380,8 @@ class ApiService {
 
       if (AppConfig.showDebugInfo) {
         DebugLogger.api(
-            '🔐 [SESSION] Server returned session: ${loginResponse.session}');
+          '🔐 [SESSION] Server returned session: ${loginResponse.session}',
+        );
         _printFormattedJson(json.encode(loginResponse.toJson()));
       }
 
@@ -387,7 +393,8 @@ class ApiService {
             e.toString().contains('HandshakeException') ||
             e.toString().contains('Connection refused')) {
           DebugLogger.error(
-              '🌐 NETWORK ERROR: Cannot connect to ${AppConfig.baseUrl}');
+            '🌐 NETWORK ERROR: Cannot connect to ${AppConfig.baseUrl}',
+          );
         }
       }
       rethrow;
@@ -403,7 +410,8 @@ class ApiService {
   }) async {
     DebugLogger.api('🔐 [API] searchRoles method called');
     DebugLogger.api(
-        '🔐 [API] Input parameters - idLoc: "$idLoc", str: "$str", nrDom: "$nrDom", rol: "$rol"');
+      '🔐 [API] Input parameters - idLoc: "$idLoc", str: "$str", nrDom: "$nrDom", rol: "$rol"',
+    );
 
     // Send search parameters unencrypted (as per API specification)
     DebugLogger.api('🔐 [API] Using unencrypted parameters as per API spec');
@@ -435,7 +443,8 @@ class ApiService {
     };
 
     DebugLogger.api(
-        'Request data created, session token: ${_getSessionToken()}');
+      'Request data created, session token: ${_getSessionToken()}',
+    );
 
     if (AppConfig.showDebugInfo) {
       DebugLogger.api('🔐 [API] === SEARCH ROLES REQUEST ===');
@@ -467,7 +476,7 @@ class ApiService {
               'nume': 'Berescu',
               'pren': 'Alex',
               'cnp': 2312321321321,
-              'tip_pers': 1
+              'tip_pers': 1,
             },
             'addr': {'loc': 'Oradea', 'str': 'Belsugului', 'nr_dom': '5'},
             'tax': [
@@ -481,10 +490,10 @@ class ApiService {
                 'data_citire_old': '0000-00-00',
                 'tip_citire_old': 'C',
                 'val_new_p': 56,
-                'val_new_e': 70
-              }
-            ]
-          })
+                'val_new_e': 70,
+              },
+            ],
+          }),
         ],
       );
 
@@ -500,18 +509,18 @@ class ApiService {
     try {
       if (AppConfig.showDebugInfo) {
         DebugLogger.api(
-            '🔐 [API] Making HTTP request to: ${AppConfig.baseUrl}/idexroluri.php');
+          '🔐 [API] Making HTTP request to: ${AppConfig.baseUrl}/idexroluri.php',
+        );
         DebugLogger.api(
-            'Request Headers: {Authorization: Bearer ${_getJWTToken().substring(0, 50)}...}');
+          'Request Headers: {Authorization: Bearer ${_getJWTToken().substring(0, 50)}...}',
+        );
       }
 
       final response = await _dio.post(
         '/idexroluri.php',
         data: requestData,
         options: Options(
-          headers: {
-            'Authorization': 'Bearer ${_getJWTToken()}',
-          },
+          headers: {'Authorization': 'Bearer ${_getJWTToken()}'},
         ),
       );
 
@@ -525,7 +534,7 @@ class ApiService {
             'err': 1,
             'msg_err': 'Invalid response format',
             'count_roles': 0,
-            'date': []
+            'date': [],
           };
         }
       } else {
@@ -565,7 +574,8 @@ class ApiService {
   }) async {
     // Send data unencrypted (as per API specification)
     DebugLogger.api(
-        '🔐 [API] Using unencrypted data for addReading as per API spec');
+      '🔐 [API] Using unencrypted data for addReading as per API spec',
+    );
     DebugLogger.api('🔐 [API] val_new: $valNew');
     DebugLogger.api('🔐 [API] data_citire_new: $dataCitireNew');
 
@@ -633,9 +643,7 @@ class ApiService {
         '/idexadauga.php',
         data: requestData,
         options: Options(
-          headers: {
-            'Authorization': 'Bearer ${_getJWTToken()}',
-          },
+          headers: {'Authorization': 'Bearer ${_getJWTToken()}'},
         ),
       );
 
@@ -703,11 +711,13 @@ class ApiService {
 
   static String encript5(String str, String pass) {
     final iv = encrypt.IV.fromSecureRandom(16);
-    final keyBytes =
-        Uint8List.fromList(sha256.convert(utf8.encode(pass)).bytes);
+    final keyBytes = Uint8List.fromList(
+      sha256.convert(utf8.encode(pass)).bytes,
+    );
     final key = encrypt.Key(keyBytes);
-    final encrypter =
-        encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc));
+    final encrypter = encrypt.Encrypter(
+      encrypt.AES(key, mode: encrypt.AESMode.cbc),
+    );
     final encrypted = encrypter.encrypt(str, iv: iv);
     final ivAndEncrypted = iv.bytes + encrypted.bytes;
     String base64 = base64Encode(ivAndEncrypted);
@@ -718,17 +728,21 @@ class ApiService {
   }
 
   static String? decript5(String str, String pass) {
-    String base64 =
-        str.replaceAll('-', '+').replaceAll('_', '/').replaceAll('~', '=');
+    String base64 = str
+        .replaceAll('-', '+')
+        .replaceAll('_', '/')
+        .replaceAll('~', '=');
     var data = base64Decode(base64);
     if (data.length < 16) return null;
     final iv = encrypt.IV(data.sublist(0, 16));
     final encrypted = data.sublist(16);
-    final keyBytes =
-        Uint8List.fromList(sha256.convert(utf8.encode(pass)).bytes);
+    final keyBytes = Uint8List.fromList(
+      sha256.convert(utf8.encode(pass)).bytes,
+    );
     final key = encrypt.Key(keyBytes);
-    final encrypter =
-        encrypt.Encrypter(encrypt.AES(key, mode: encrypt.AESMode.cbc));
+    final encrypter = encrypt.Encrypter(
+      encrypt.AES(key, mode: encrypt.AESMode.cbc),
+    );
     try {
       return encrypter.decrypt(encrypt.Encrypted(encrypted), iv: iv);
     } catch (e) {
@@ -748,7 +762,8 @@ class ApiService {
     try {
       if (AppConfig.showDebugInfo) {
         DebugLogger.api(
-            '🔐 [LOCATIONS] === EXTRACTING LOCALITIES FROM JWT ===');
+          '🔐 [LOCATIONS] === EXTRACTING LOCALITIES FROM JWT ===',
+        );
         DebugLogger.api('JWT Token: ${token.substring(0, 50)}...');
       }
 
@@ -782,14 +797,16 @@ class ApiService {
       if (localitArray == null) {
         if (AppConfig.showDebugInfo) {
           DebugLogger.api(
-              '🔐 [LOCATIONS] No localit array found in JWT payload');
+            '🔐 [LOCATIONS] No localit array found in JWT payload',
+          );
         }
         return [];
       }
 
       if (AppConfig.showDebugInfo) {
         DebugLogger.api(
-            '🔐 [LOCATIONS] Found ${localitArray.length} localities in JWT');
+          '🔐 [LOCATIONS] Found ${localitArray.length} localities in JWT',
+        );
       }
 
       final localities = localitArray
@@ -807,7 +824,8 @@ class ApiService {
     } catch (e) {
       if (AppConfig.showDebugInfo) {
         DebugLogger.api(
-            '🔐 [LOCATIONS] Error extracting localities from JWT: $e');
+          '🔐 [LOCATIONS] Error extracting localities from JWT: $e',
+        );
       }
       return [];
     }
