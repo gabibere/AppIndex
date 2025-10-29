@@ -175,7 +175,7 @@ class SearchProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _setError('Failed to add reading: $e');
+      _setError('Eroare la salvarea citirii: $e');
       return false;
     } finally {
       _setLoading(false);

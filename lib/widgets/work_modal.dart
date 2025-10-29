@@ -966,7 +966,7 @@ class _WorkModalState extends State<WorkModal> {
         });
 
         // Show success message
-        _showSuccessMessage('Reading saved successfully!');
+        _showSuccessMessage('Citirea a fost salvată cu succes!');
 
         DebugLogger.success(
           '✅ [WORK_MODAL] Reading saved successfully: ${response.msgErr}',

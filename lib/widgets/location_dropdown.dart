@@ -79,7 +79,7 @@ class _LocationDropdownState extends State<LocationDropdown> {
 
                 if (AppConfig.showDebugInfo) {
                   DebugLogger.location(
-                      'Auto-selecting first location: $_selectedLocationName (ID: $_selectedLocationId)');
+                      'Selectare automată prima locație: $_selectedLocationName (ID: $_selectedLocationId)');
                 }
 
                 // Notify parent widget about the selection
@@ -92,7 +92,7 @@ class _LocationDropdownState extends State<LocationDropdown> {
       } else {
         if (mounted) {
           setState(() {
-            _errorMessage = 'No authentication token found';
+            _errorMessage = 'Token de autentificare negăsit';
             _isLoading = false;
           });
         }
@@ -100,7 +100,7 @@ class _LocationDropdownState extends State<LocationDropdown> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Error loading locations: $e';
+          _errorMessage = 'Eroare la încărcarea locațiilor: $e';
           _isLoading = false;
         });
       }
@@ -119,7 +119,7 @@ class _LocationDropdownState extends State<LocationDropdown> {
       // Decode JWT token to get payload
       final parts = jwtToken.split('.');
       if (parts.length != 3) {
-        throw Exception('Invalid JWT token format');
+        throw Exception('Format token JWT invalid');
       }
 
       // Decode payload (base64url)
@@ -304,7 +304,7 @@ class _LocationDropdownState extends State<LocationDropdown> {
               TextButton(
                 onPressed: _loadLocations,
                 child: Text(
-                  'Retry',
+                  'Încearcă din nou',
                   style: TextStyle(
                     color: const Color(AppConfig.primaryColor),
                     fontSize: 12,

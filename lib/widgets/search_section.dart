@@ -474,16 +474,11 @@ class _SearchSectionState extends State<SearchSection> {
         }
       });
 
-      // Show success message with full address and clear fields action
+      // Show success message with full address
       context.showSuccessMessage(
         message: LocalizationService.getString('location.location_updated'),
         additionalInfo: locationProvider.currentAddress!,
         duration: const Duration(seconds: 4),
-        actionLabel: LocalizationService.getString('location.clear_fields'),
-        onAction: () {
-          _clearSearch();
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        },
       );
     } else {
       // Show enhanced error handling with permission dialog
