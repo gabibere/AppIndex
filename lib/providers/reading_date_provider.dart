@@ -13,8 +13,8 @@ class ReadingDateProvider extends ChangeNotifier {
   bool get isInitialized => _isInitialized;
 
   String get formattedDate {
-    return '${_selectedDate.day.toString().padLeft(2, '0')}/'
-        '${_selectedDate.month.toString().padLeft(2, '0')}/'
+    return '${_selectedDate.day.toString().padLeft(2, '0')}.'
+        '${_selectedDate.month.toString().padLeft(2, '0')}.'
         '${_selectedDate.year}';
   }
 
@@ -34,12 +34,14 @@ class ReadingDateProvider extends ChangeNotifier {
       if (savedDate != null) {
         _selectedDate = DateTime.parse(savedDate);
         if (AppConfig.showDebugInfo) {
-          DebugLogger.log('📅 [READING_DATE] Loaded saved date: $formattedDate');
+          DebugLogger.log(
+              '📅 [READING_DATE] Loaded saved date: $formattedDate');
         }
       } else {
         _selectedDate = DateTime.now();
         if (AppConfig.showDebugInfo) {
-          DebugLogger.log('📅 [READING_DATE] Using current date: $formattedDate');
+          DebugLogger.log(
+              '📅 [READING_DATE] Using current date: $formattedDate');
         }
       }
 

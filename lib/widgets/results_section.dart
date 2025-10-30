@@ -10,6 +10,7 @@ class ResultsSection extends StatelessWidget {
   final String? error;
   final VoidCallback? onRetry;
   final bool hasSearched;
+  final VoidCallback? onDataRefresh;
 
   const ResultsSection({
     super.key,
@@ -18,6 +19,7 @@ class ResultsSection extends StatelessWidget {
     this.error,
     this.onRetry,
     this.hasSearched = false,
+    this.onDataRefresh,
   });
 
   @override
@@ -211,7 +213,10 @@ class ResultsSection extends StatelessWidget {
           itemCount: roles.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
-            return _RoleCard(role: roles[index]);
+            return _RoleCard(
+              role: roles[index],
+              onDataRefresh: onDataRefresh,
+            );
           },
         ),
       ],
@@ -221,8 +226,9 @@ class ResultsSection extends StatelessWidget {
 
 class _RoleCard extends StatelessWidget {
   final Role role;
+  final VoidCallback? onDataRefresh;
 
-  const _RoleCard({required this.role});
+  const _RoleCard({required this.role, this.onDataRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -344,7 +350,7 @@ class _RoleCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${role.tax.length} taxes',
+                      '${role.tax.length} taxe',
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(AppConfig.textSecondaryColor),
@@ -373,7 +379,10 @@ class _RoleCard extends StatelessWidget {
       enableDrag: true,
       isDismissible: true,
       useSafeArea: false,
-      builder: (context) => WorkModal(role: role),
+      builder: (context) => WorkModal(
+        role: role,
+        onDataUpdated: onDataRefresh,
+      ),
     );
   }
 }

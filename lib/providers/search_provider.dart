@@ -14,6 +14,12 @@ class SearchProvider with ChangeNotifier {
   bool _hasMoreData = true;
   bool _hasSearched = false; // Track if a search has been performed
 
+  // Last search parameters for refresh
+  String? _lastIdLoc;
+  String? _lastStr;
+  String? _lastNrDom;
+  String? _lastRol;
+
   // Getters
   List<Role> get searchResults => _searchResults;
   bool get isLoading => _isLoading;
@@ -37,6 +43,12 @@ class SearchProvider with ChangeNotifier {
     DebugLogger.search('🔍 [SEARCH_PROVIDER] str: "$str"');
     DebugLogger.search('🔍 [SEARCH_PROVIDER] nrDom: "$nrDom"');
     DebugLogger.search('🔍 [SEARCH_PROVIDER] rol: "$rol"');
+
+    // Store last search parameters for refresh
+    _lastIdLoc = idLoc;
+    _lastStr = str;
+    _lastNrDom = nrDom;
+    _lastRol = rol;
 
     _isSearching = true;
     _hasSearched = true; // Mark that a search has been performed
@@ -139,6 +151,27 @@ class SearchProvider with ChangeNotifier {
     _hasSearched = false; // Reset search flag when clearing
     _clearError();
     notifyListeners();
+  }
+
+  // Refresh data with last search parameters
+  Future<void> refreshData() async {
+    if (_lastIdLoc != null &&
+        _lastStr != null &&
+        _lastNrDom != null &&
+        _lastRol != null) {
+      DebugLogger.search(
+          '🔄 [SEARCH_PROVIDER] Refreshing data with last search parameters');
+      await search(
+        idLoc: _lastIdLoc!,
+        str: _lastStr!,
+        nrDom: _lastNrDom!,
+        rol: _lastRol!,
+        clearPrevious: true,
+      );
+    } else {
+      DebugLogger.warning(
+          '⚠️ [SEARCH_PROVIDER] No previous search parameters found for refresh');
+    }
   }
 
   // Add reading

@@ -11,8 +11,9 @@ import '../utils/debug_logger.dart';
 
 class WorkModal extends StatefulWidget {
   final Role? role;
+  final VoidCallback? onDataUpdated;
 
-  const WorkModal({super.key, this.role});
+  const WorkModal({super.key, this.role, this.onDataUpdated});
 
   @override
   State<WorkModal> createState() => _WorkModalState();
@@ -799,62 +800,10 @@ class _WorkModalState extends State<WorkModal> {
                 color: Color(AppConfig.textColor),
               ),
             ),
+            const SizedBox(height: 20),
+            _buildModernValueSection(taxType, value),
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(
-                  AppConfig.primaryColor,
-                ).withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(
-                    AppConfig.primaryColor,
-                  ).withValues(alpha: 0.2),
-                  width: 1,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        color: const Color(AppConfig.primaryColor),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        LocalizationService.getString('work.reading_details'),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Color(AppConfig.primaryColor),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDetailRow(
-                    LocalizationService.getString('work.tax_type'),
-                    _getTaxTypeTranslation(taxType),
-                  ),
-                  _buildDetailRow(
-                    LocalizationService.getString('work.value'),
-                    value,
-                  ),
-                  _buildDetailRow(
-                    LocalizationService.getString('work.date'),
-                    '${_readingDates[taxType]!.day}/${_readingDates[taxType]!.month}/${_readingDates[taxType]!.year}',
-                  ),
-                  _buildDetailRow(
-                    LocalizationService.getString('work.reading_type'),
-                    _readingTypes[taxType]!,
-                  ),
-                ],
-              ),
-            ),
+            _buildModernDetailsSection(taxType),
           ],
         ),
         actions: [
@@ -968,6 +917,9 @@ class _WorkModalState extends State<WorkModal> {
         // Show success message
         _showSuccessMessage('Citirea a fost salvată cu succes!');
 
+        // Refresh data to get updated values from server
+        widget.onDataUpdated?.call();
+
         DebugLogger.success(
           '✅ [WORK_MODAL] Reading saved successfully: ${response.msgErr}',
         );
@@ -989,37 +941,6 @@ class _WorkModalState extends State<WorkModal> {
         _isSaving = false;
       });
     }
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: const Color(AppConfig.textSecondaryColor),
-                fontSize: 14,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: const Color(AppConfig.textColor),
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildSavedCurrentItem(String label, String value) {
@@ -1264,7 +1185,7 @@ class _WorkModalState extends State<WorkModal> {
         hintText: (readingType.contains('(E)') ||
                 readingType.contains('(P)') ||
                 readingType.contains('(F)'))
-            ? 'Valoare sugerată'
+            ? 'Valoare'
             : LocalizationService.getString('work.enter_value'),
         hintStyle: TextStyle(
           color: hasError
@@ -1339,6 +1260,219 @@ class _WorkModalState extends State<WorkModal> {
           });
         }
       },
+    );
+  }
+
+  /// Build modern value section with tax, old value, new value, and difference
+  Widget _buildModernValueSection(String taxType, String newValue) {
+    final tax = _findTaxForType(taxType);
+    if (tax == null) return const SizedBox.shrink();
+
+    final oldValue = tax.valOld;
+    final newValueInt = int.tryParse(newValue) ?? 0;
+    final difference = newValueInt - oldValue;
+    final unit = tax.unitMasura;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(AppConfig.backgroundColor),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(AppConfig.primaryColor).withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tax Type - Left aligned
+          Row(
+            children: [
+              Icon(
+                Icons.receipt,
+                size: 18,
+                color: const Color(AppConfig.primaryColor),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Taxa:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(AppConfig.textSecondaryColor),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _getTaxTypeTranslation(taxType),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(AppConfig.textColor),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Old Value
+          _buildSimpleValueRow(
+            'Valoare anterioară:',
+            '$oldValue $unit',
+            Icons.history,
+          ),
+          const SizedBox(height: 8),
+
+          // New Value
+          _buildSimpleValueRow(
+            'Valoare curentă:',
+            '$newValue $unit',
+            Icons.edit,
+          ),
+
+          const SizedBox(height: 12),
+
+          // Difference (subtle)
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: difference >= 0
+                    ? const Color(AppConfig.successColor).withValues(alpha: 0.1)
+                    : const Color(AppConfig.warningColor)
+                        .withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: difference >= 0
+                      ? const Color(AppConfig.successColor)
+                          .withValues(alpha: 0.3)
+                      : const Color(AppConfig.warningColor)
+                          .withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    difference >= 0 ? Icons.trending_up : Icons.trending_down,
+                    size: 16,
+                    color: difference >= 0
+                        ? const Color(AppConfig.successColor)
+                        : const Color(AppConfig.warningColor),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${difference >= 0 ? '+' : ''}$difference $unit',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: difference >= 0
+                          ? const Color(AppConfig.successColor)
+                          : const Color(AppConfig.warningColor),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build modern details section with date and reading type
+  Widget _buildModernDetailsSection(String taxType) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(AppConfig.backgroundColor),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(AppConfig.primaryColor).withValues(alpha: 0.1),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildModernInfoRow(
+            'Data:',
+            '${_readingDates[taxType]!.day}/${_readingDates[taxType]!.month}/${_readingDates[taxType]!.year}',
+            Icons.calendar_today,
+            const Color(AppConfig.textSecondaryColor),
+          ),
+          const SizedBox(height: 12),
+          _buildModernInfoRow(
+            'Tip citire:',
+            _readingTypes[taxType]!,
+            Icons.category,
+            const Color(AppConfig.textSecondaryColor),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build simple value row with icon, label and value
+  Widget _buildSimpleValueRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 16,
+          color: const Color(AppConfig.textSecondaryColor),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: const Color(AppConfig.textSecondaryColor),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: const Color(AppConfig.textColor),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build modern info row with icon and text
+  Widget _buildModernInfoRow(
+      String label, String value, IconData icon, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: const Color(AppConfig.textSecondaryColor),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: const Color(AppConfig.textColor),
+            ),
+            textAlign: TextAlign.end,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -21,10 +21,13 @@ class _DashboardScreenState extends State<DashboardScreen>
   late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late ScrollController _scrollController;
+  final GlobalKey _resultsSectionKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
     _initializeAnimations();
     _startAnimations();
   }
@@ -57,10 +60,27 @@ class _DashboardScreenState extends State<DashboardScreen>
     _slideController.forward();
   }
 
+  void _scrollToResults() {
+    if (_resultsSectionKey.currentContext != null) {
+      Scrollable.ensureVisible(
+        _resultsSectionKey.currentContext!,
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOut,
+        alignment: 0.1, // Scroll so results section is near the top
+      );
+    }
+  }
+
+  void _performDataRefresh(SearchProvider searchProvider) {
+    // Refresh data by calling the refresh method
+    searchProvider.refreshData();
+  }
+
   @override
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -145,6 +165,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         // Main Content
         Expanded(
           child: SingleChildScrollView(
+            controller: _scrollController,
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
@@ -154,7 +175,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                 const SizedBox(height: 20),
 
                 // Search Section
-                const SearchSection(),
+                SearchSection(
+                  onSearchTriggered: _scrollToResults,
+                ),
 
                 const SizedBox(height: 24),
 
@@ -162,6 +185,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Consumer<SearchProvider>(
                   builder: (context, searchProvider, child) {
                     return ResultsSection(
+                      key: _resultsSectionKey,
                       roles: searchProvider.searchResults,
                       isLoading: searchProvider.isSearching,
                       error: searchProvider.error,
@@ -169,6 +193,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                       onRetry: () {
                         // Retry with last search parameters if available
                         // You may need to store search parameters in SearchProvider
+                      },
+                      onDataRefresh: () {
+                        // Refresh data by performing the same search again
+                        _performDataRefresh(searchProvider);
                       },
                     );
                   },

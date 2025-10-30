@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../config/app_config.dart';
 import '../providers/search_provider.dart';
@@ -10,7 +11,9 @@ import 'location_dropdown.dart';
 import '../utils/debug_logger.dart';
 
 class SearchSection extends StatefulWidget {
-  const SearchSection({super.key});
+  final VoidCallback? onSearchTriggered;
+
+  const SearchSection({super.key, this.onSearchTriggered});
 
   @override
   State<SearchSection> createState() => _SearchSectionState();
@@ -52,17 +55,25 @@ class _SearchSectionState extends State<SearchSection> {
         houseNumber.isNotEmpty ||
         rol.isNotEmpty) {
       DebugLogger.search('🔍 [SEARCH] Fields filled, calling search...');
-      final searchProvider =
-          Provider.of<SearchProvider>(context, listen: false);
+      final searchProvider = Provider.of<SearchProvider>(
+        context,
+        listen: false,
+      );
       searchProvider.search(
         idLoc: locationId,
         str: street,
         nrDom: houseNumber,
         rol: rol,
       );
+
+      // Trigger scroll to results after a short delay to allow search to start
+      Future.delayed(const Duration(milliseconds: 300), () {
+        widget.onSearchTriggered?.call();
+      });
     } else {
       DebugLogger.search(
-          '🔍 [SEARCH] No fields filled - please enter at least one search criteria');
+        '🔍 [SEARCH] No fields filled - please enter at least one search criteria',
+      );
     }
   }
 
@@ -120,6 +131,8 @@ class _SearchSectionState extends State<SearchSection> {
         nrDom: houseNumber,
         rol: rol,
       );
+
+      // Note: No scroll trigger here - only when search button is pressed
     } else {
       DebugLogger.search('🔍 [CLEAR] All fields cleared - no auto-search');
     }
@@ -140,8 +153,9 @@ class _SearchSectionState extends State<SearchSection> {
             // Search card
             Card(
               elevation: 4,
-              shadowColor:
-                  const Color(AppConfig.primaryColor).withValues(alpha: 0.2),
+              shadowColor: const Color(
+                AppConfig.primaryColor,
+              ).withValues(alpha: 0.2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppConfig.borderRadius),
               ),
@@ -196,8 +210,9 @@ class _SearchSectionState extends State<SearchSection> {
                     onPressed: () {
                       _clearFieldAndSearch('street');
                     },
-                    tooltip:
-                        LocalizationService.getString('search.street_clear'),
+                    tooltip: LocalizationService.getString(
+                      'search.street_clear',
+                    ),
                   )
                 : null,
             border: OutlineInputBorder(
@@ -216,8 +231,8 @@ class _SearchSectionState extends State<SearchSection> {
         TextField(
           controller: _houseNumberController,
           decoration: InputDecoration(
-            labelText: 'Număr Domiciliu',
-            hintText: 'Ex: 5, 5A, 10B',
+            labelText: LocalizationService.getString('search.house_number'),
+            hintText: LocalizationService.getString('search.house_number_hint'),
             prefixIcon: const Icon(Icons.home),
             suffixIcon: _houseNumberController.text.isNotEmpty
                 ? IconButton(
@@ -225,7 +240,8 @@ class _SearchSectionState extends State<SearchSection> {
                     onPressed: () {
                       _clearFieldAndSearch('houseNumber');
                     },
-                    tooltip: 'Șterge numărul',
+                    tooltip: LocalizationService.getString(
+                        'search.house_number_clear'),
                   )
                 : null,
             border: OutlineInputBorder(
@@ -243,6 +259,10 @@ class _SearchSectionState extends State<SearchSection> {
         // Rol field
         TextField(
           controller: _rolController,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
           decoration: InputDecoration(
             labelText: LocalizationService.getString('search.rol'),
             hintText: LocalizationService.getString('search.rol_hint'),
@@ -279,8 +299,9 @@ class _SearchSectionState extends State<SearchSection> {
               backgroundColor: const Color(AppConfig.primaryColor),
               foregroundColor: Colors.white,
               elevation: 4,
-              shadowColor:
-                  const Color(AppConfig.primaryColor).withValues(alpha: 0.3),
+              shadowColor: const Color(
+                AppConfig.primaryColor,
+              ).withValues(alpha: 0.3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppConfig.borderRadius),
               ),
@@ -332,114 +353,15 @@ class _SearchSectionState extends State<SearchSection> {
                 ),
           ),
         ),
-
-        // Help hint button
-        IconButton(
-          onPressed: _showHelpDialog,
-          icon: const Icon(Icons.help_outline),
-          tooltip: LocalizationService.getString('search.how_to_search'),
-          style: IconButton.styleFrom(
-            backgroundColor:
-                const Color(AppConfig.primaryColor).withValues(alpha: 0.1),
-            foregroundColor: const Color(AppConfig.primaryColor),
-          ),
-        ),
-
-        const SizedBox(width: 8),
-
-        // Location button
-        Consumer<LocationProvider>(
-          builder: (context, locationProvider, child) {
-            return IconButton(
-              onPressed:
-                  locationProvider.isLoading ? null : _getCurrentLocation,
-              icon: locationProvider.isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.my_location),
-              tooltip: LocalizationService.getString('search.get_location'),
-              style: IconButton.styleFrom(
-                backgroundColor:
-                    const Color(AppConfig.accentColor).withValues(alpha: 0.1),
-                foregroundColor: const Color(AppConfig.accentColor),
-              ),
-            );
-          },
-        ),
       ],
     );
   }
 
-  void _showHelpDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.help_outline,
-                color: Color(AppConfig.primaryColor)),
-            const SizedBox(width: 8),
-            Text(LocalizationService.getString('search.help_title')),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              LocalizationService.getString('search.help_description'),
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            _HelpItem(
-              icon: Icons.location_city,
-              title: LocalizationService.getString('search.help_city'),
-              description:
-                  LocalizationService.getString('search.help_city_desc'),
-            ),
-            _HelpItem(
-              icon: Icons.streetview,
-              title: LocalizationService.getString('search.help_street'),
-              description:
-                  LocalizationService.getString('search.help_street_desc'),
-            ),
-            _HelpItem(
-              icon: Icons.home,
-              title: 'Număr Domiciliu',
-              description: 'Numărul casei (ex: 5, 5A, 10B)',
-            ),
-            _HelpItem(
-              icon: Icons.numbers,
-              title: LocalizationService.getString('search.help_rol'),
-              description:
-                  LocalizationService.getString('search.help_rol_desc'),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              LocalizationService.getString('search.help_tip'),
-              style: const TextStyle(
-                fontStyle: FontStyle.italic,
-                color: Color(AppConfig.primaryColor),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(LocalizationService.getString('search.got_it')),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _getCurrentLocation() async {
-    final locationProvider =
-        Provider.of<LocationProvider>(context, listen: false);
+    final locationProvider = Provider.of<LocationProvider>(
+      context,
+      listen: false,
+    );
 
     // Get current location
     bool success = await locationProvider.getCurrentLocation();
@@ -453,7 +375,8 @@ class _SearchSectionState extends State<SearchSection> {
       DebugLogger.location('🌍 [LOCATION] City: "${addressParts['city']}"');
       DebugLogger.location('🌍 [LOCATION] Street: "${addressParts['street']}"');
       DebugLogger.location(
-          '🌍 [LOCATION] House Number: "${addressParts['houseNumber']}"');
+        '🌍 [LOCATION] House Number: "${addressParts['houseNumber']}"',
+      );
 
       setState(() {
         if (addressParts['city']?.isNotEmpty == true) {
@@ -467,10 +390,12 @@ class _SearchSectionState extends State<SearchSection> {
         if (addressParts['houseNumber']?.isNotEmpty == true) {
           _houseNumberController.text = addressParts['houseNumber']!;
           DebugLogger.success(
-              '🌍 [LOCATION] ✅ Auto-filled house number: "${addressParts['houseNumber']}"');
+            '🌍 [LOCATION] ✅ Auto-filled house number: "${addressParts['houseNumber']}"',
+          );
         } else {
           DebugLogger.warning(
-              '🌍 [LOCATION] ⚠️ No house number found in address');
+            '🌍 [LOCATION] ⚠️ No house number found in address',
+          );
         }
       });
 
@@ -507,8 +432,9 @@ class _SearchSectionState extends State<SearchSection> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title:
-            Text(LocalizationService.getString('location.services_disabled')),
+        title: Text(
+          LocalizationService.getString('location.services_disabled'),
+        ),
         content: Text(
           LocalizationService.getString('location.services_disabled_message'),
         ),
@@ -522,8 +448,9 @@ class _SearchSectionState extends State<SearchSection> {
               Navigator.of(context).pop();
               // Open location settings
             },
-            child:
-                Text(LocalizationService.getString('location.open_settings')),
+            child: Text(
+              LocalizationService.getString('location.open_settings'),
+            ),
           ),
         ],
       ),
@@ -534,16 +461,15 @@ class _SearchSectionState extends State<SearchSection> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color:
-                    const Color(AppConfig.warningColor).withValues(alpha: 0.1),
+                color: const Color(
+                  AppConfig.warningColor,
+                ).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -580,12 +506,14 @@ class _SearchSectionState extends State<SearchSection> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color:
-                    const Color(AppConfig.primaryColor).withValues(alpha: 0.05),
+                color: const Color(
+                  AppConfig.primaryColor,
+                ).withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: const Color(AppConfig.primaryColor)
-                      .withValues(alpha: 0.2),
+                  color: const Color(
+                    AppConfig.primaryColor,
+                  ).withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -638,8 +566,10 @@ class _SearchSectionState extends State<SearchSection> {
                   LocationService.openAppSettings();
                 },
                 style: OutlinedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   side: BorderSide(
                     color: const Color(AppConfig.primaryColor),
                     width: 1.5,
@@ -665,8 +595,10 @@ class _SearchSectionState extends State<SearchSection> {
                 onPressed: () async {
                   Navigator.of(context).pop();
                   // Try to request permission directly
-                  final locationProvider =
-                      Provider.of<LocationProvider>(context, listen: false);
+                  final locationProvider = Provider.of<LocationProvider>(
+                    context,
+                    listen: false,
+                  );
                   await locationProvider.requestPermission();
                   // Retry getting location
                   _getCurrentLocation();
@@ -674,8 +606,10 @@ class _SearchSectionState extends State<SearchSection> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(AppConfig.primaryColor),
                   foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -710,25 +644,30 @@ class _SearchSectionState extends State<SearchSection> {
       // Extract house number from street with number
       // Improved regex to handle various formats: "5", "5A", "10B", "123", "123A"
       // Also handles cases like "Strada Mihai Viteazu 5A" or "Bulevardul 1 Decembrie 1918 10B"
-      final houseNumberMatch =
-          RegExp(r'\s+(\d+[A-Za-z]?)\s*$').firstMatch(streetWithNumber);
+      final houseNumberMatch = RegExp(
+        r'\s+(\d+[A-Za-z]?)\s*$',
+      ).firstMatch(streetWithNumber);
 
       if (houseNumberMatch != null) {
         houseNumber = houseNumberMatch.group(1) ?? '';
         DebugLogger.location(
-            '🌍 [PARSING] Found house number: "$houseNumber" in "$streetWithNumber"');
+          '🌍 [PARSING] Found house number: "$houseNumber" in "$streetWithNumber"',
+        );
       } else {
         // Try alternative pattern for cases like "nr. 5A" or "No. 10B"
-        final altMatch = RegExp(r'(?:nr\.?|no\.?|number)\s*(\d+[A-Za-z]?)\s*$',
-                caseSensitive: false)
-            .firstMatch(streetWithNumber);
+        final altMatch = RegExp(
+          r'(?:nr\.?|no\.?|number)\s*(\d+[A-Za-z]?)\s*$',
+          caseSensitive: false,
+        ).firstMatch(streetWithNumber);
         if (altMatch != null) {
           houseNumber = altMatch.group(1) ?? '';
           DebugLogger.location(
-              'Found house number (alt): "$houseNumber" in "$streetWithNumber"');
+            'Found house number (alt): "$houseNumber" in "$streetWithNumber"',
+          );
         } else {
           DebugLogger.location(
-              '🌍 [PARSING] No house number found in "$streetWithNumber"');
+            '🌍 [PARSING] No house number found in "$streetWithNumber"',
+          );
         }
       }
 
@@ -745,25 +684,29 @@ class _SearchSectionState extends State<SearchSection> {
       final singlePart = parts[0].trim();
       if (singlePart.contains(RegExp(r'\d+'))) {
         // Extract house number
-        final houseNumberMatch =
-            RegExp(r'\s+(\d+[A-Za-z]?)\s*$').firstMatch(singlePart);
+        final houseNumberMatch = RegExp(
+          r'\s+(\d+[A-Za-z]?)\s*$',
+        ).firstMatch(singlePart);
         if (houseNumberMatch != null) {
           houseNumber = houseNumberMatch.group(1) ?? '';
           DebugLogger.location(
-              '🌍 [PARSING] Found house number: "$houseNumber" in "$singlePart"');
+            '🌍 [PARSING] Found house number: "$houseNumber" in "$singlePart"',
+          );
         } else {
           // Try alternative pattern for cases like "nr. 5A" or "No. 10B"
           final altMatch = RegExp(
-                  r'(?:nr\.?|no\.?|number)\s*(\d+[A-Za-z]?)\s*$',
-                  caseSensitive: false)
-              .firstMatch(singlePart);
+            r'(?:nr\.?|no\.?|number)\s*(\d+[A-Za-z]?)\s*$',
+            caseSensitive: false,
+          ).firstMatch(singlePart);
           if (altMatch != null) {
             houseNumber = altMatch.group(1) ?? '';
             DebugLogger.location(
-                'Found house number (alt): "$houseNumber" in "$singlePart"');
+              'Found house number (alt): "$houseNumber" in "$singlePart"',
+            );
           } else {
             DebugLogger.location(
-                '🌍 [PARSING] No house number found in "$singlePart"');
+              '🌍 [PARSING] No house number found in "$singlePart"',
+            );
           }
         }
 
@@ -783,11 +726,7 @@ class _SearchSectionState extends State<SearchSection> {
     DebugLogger.location('🌍 [PARSING] City: "$city"');
     DebugLogger.location('🌍 [PARSING] House Number: "$houseNumber"');
 
-    return {
-      'street': street,
-      'city': city,
-      'houseNumber': houseNumber,
-    };
+    return {'street': street, 'city': city, 'houseNumber': houseNumber};
   }
 
   bool _isRomanianNumberedStreet(String street) {
@@ -803,49 +742,5 @@ class _SearchSectionState extends State<SearchSection> {
 
   String _cleanRomanianStreet(String street) {
     return street.replaceAll(RegExp(r'\s+\d+\s*$'), '').trim();
-  }
-}
-
-// Help item widget for the dialog
-class _HelpItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String description;
-
-  const _HelpItem({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: const Color(AppConfig.primaryColor)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: const Color(AppConfig.textSecondaryColor),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

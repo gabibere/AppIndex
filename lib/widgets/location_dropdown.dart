@@ -79,12 +79,15 @@ class _LocationDropdownState extends State<LocationDropdown> {
 
                 if (AppConfig.showDebugInfo) {
                   DebugLogger.location(
-                      'Selectare automată prima locație: $_selectedLocationName (ID: $_selectedLocationId)');
+                    'Selectare automată prima locație: $_selectedLocationName (ID: $_selectedLocationId)',
+                  );
                 }
 
                 // Notify parent widget about the selection
                 widget.onLocationChanged(
-                    _selectedLocationId, _selectedLocationName);
+                  _selectedLocationId,
+                  _selectedLocationName,
+                );
               }
             });
           }
@@ -108,11 +111,13 @@ class _LocationDropdownState extends State<LocationDropdown> {
   }
 
   List<Map<String, dynamic>> _extractDistinctLocalitiesFromJWT(
-      String jwtToken) {
+    String jwtToken,
+  ) {
     try {
       if (AppConfig.showDebugInfo) {
         DebugLogger.api(
-            '🔐 [LOCATIONS] === EXTRACTING DISTINCT LOCALITIES FROM JWT ===');
+          '🔐 [LOCATIONS] === EXTRACTING DISTINCT LOCALITIES FROM JWT ===',
+        );
         DebugLogger.api('JWT Token: ${jwtToken.substring(0, 50)}...');
       }
 
@@ -125,25 +130,30 @@ class _LocationDropdownState extends State<LocationDropdown> {
       // Decode payload (base64url)
       final payload = parts[1];
       // Add padding if needed
-      final paddedPayload =
-          payload.padRight(payload.length + (4 - payload.length % 4) % 4, '=');
+      final paddedPayload = payload.padRight(
+        payload.length + (4 - payload.length % 4) % 4,
+        '=',
+      );
       final decodedPayload = utf8.decode(base64Url.decode(paddedPayload));
       final payloadJson = json.decode(decodedPayload);
 
       if (AppConfig.showDebugInfo) {
         DebugLogger.success('🔐 [LOCATIONS] JWT Payload decoded successfully');
         DebugLogger.api(
-            '🔐 [LOCATIONS] Found localit array: ${payloadJson['localit'] != null}');
+          '🔐 [LOCATIONS] Found localit array: ${payloadJson['localit'] != null}',
+        );
       }
 
       // Extract localit array from payload
       if (payloadJson['localit'] != null) {
-        final localitArray =
-            List<Map<String, dynamic>>.from(payloadJson['localit']);
+        final localitArray = List<Map<String, dynamic>>.from(
+          payloadJson['localit'],
+        );
 
         if (AppConfig.showDebugInfo) {
           DebugLogger.api(
-              '🔐 [LOCATIONS] Raw localit array length: ${localitArray.length}');
+            '🔐 [LOCATIONS] Raw localit array length: ${localitArray.length}',
+          );
         }
 
         // Keep only distinct localities (remove duplicates by id_loc)
@@ -159,12 +169,15 @@ class _LocationDropdownState extends State<LocationDropdown> {
 
         if (AppConfig.showDebugInfo) {
           DebugLogger.api(
-              '🔐 [LOCATIONS] Distinct localities found: ${uniqueList.length}');
+            '🔐 [LOCATIONS] Distinct localities found: ${uniqueList.length}',
+          );
           DebugLogger.api(
-              '🔐 [LOCATIONS] Note: Server returns duplicates, we keep only distinct localities');
+            '🔐 [LOCATIONS] Note: Server returns duplicates, we keep only distinct localities',
+          );
           for (final location in uniqueList) {
             DebugLogger.api(
-                '   - ${location['loc']} (ID: ${location['id_loc']})');
+              '   - ${location['loc']} (ID: ${location['id_loc']})',
+            );
           }
         }
 
@@ -174,7 +187,8 @@ class _LocationDropdownState extends State<LocationDropdown> {
       return [];
     } catch (e) {
       DebugLogger.location(
-          '❌ [LOCATIONS] Error extracting locations from JWT: $e');
+        '❌ [LOCATIONS] Error extracting locations from JWT: $e',
+      );
       return [];
     }
   }
@@ -192,16 +206,6 @@ class _LocationDropdownState extends State<LocationDropdown> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label
-        Text(
-          LocalizationService.getString('search.city'),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: const Color(AppConfig.textColor),
-              ),
-        ),
-        const SizedBox(height: 8),
-
         // Dropdown Container
         Container(
           decoration: BoxDecoration(
@@ -219,8 +223,10 @@ class _LocationDropdownState extends State<LocationDropdown> {
               borderRadius: BorderRadius.circular(AppConfig.borderRadius),
               onTap: widget.enabled && !_isLoading ? _showLocationPicker : null,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 child: Row(
                   children: [
                     // Location icon
@@ -234,9 +240,7 @@ class _LocationDropdownState extends State<LocationDropdown> {
                     const SizedBox(width: 12),
 
                     // Selected location or placeholder
-                    Expanded(
-                      child: _buildLocationText(),
-                    ),
+                    Expanded(child: _buildLocationText()),
 
                     // Clear button (if location is selected) or loading/error/arrow
                     if (_selectedLocationId != null &&
@@ -247,7 +251,7 @@ class _LocationDropdownState extends State<LocationDropdown> {
                         onPressed: () {
                           _onLocationChanged(null, null);
                         },
-                        tooltip: 'Șterge orașul',
+                        tooltip: 'Șterge localitatea',
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       )
@@ -434,13 +438,16 @@ class _LocationDropdownState extends State<LocationDropdown> {
                 final isSelected = _selectedLocationId == locationId;
 
                 return Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(AppConfig.borderRadius),
                     color: isSelected
-                        ? const Color(AppConfig.primaryColor)
-                            .withValues(alpha: 0.1)
+                        ? const Color(
+                            AppConfig.primaryColor,
+                          ).withValues(alpha: 0.1)
                         : Colors.transparent,
                   ),
                   child: ListTile(
