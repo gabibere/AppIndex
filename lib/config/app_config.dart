@@ -1,6 +1,6 @@
 class AppConfig {
   // App Information
-  static const String appName = 'AppIndex';
+  static const String appName = 'SysIndex';
   static const String appVersion = '1.0.0';
 
   // Colors - Modern Color Palette

@@ -234,18 +234,6 @@ class _SplashScreenState extends State<SplashScreen>
                                         letterSpacing: 2.0,
                                       ),
                                     ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      LocalizationService.getString(
-                                          'app.tagline'),
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.white
-                                            .withValues(alpha: 0.95),
-                                        letterSpacing: 0.8,
-                                      ),
-                                    ),
                                   ],
                                 ),
                               ),
