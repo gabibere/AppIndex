@@ -259,10 +259,6 @@ class _SearchSectionState extends State<SearchSection> {
         // Rol field
         TextField(
           controller: _rolController,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-          ],
           decoration: InputDecoration(
             labelText: LocalizationService.getString('search.rol'),
             hintText: LocalizationService.getString('search.rol_hint'),

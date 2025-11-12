@@ -50,12 +50,12 @@ class ApiService {
           final client = HttpClient();
           client.badCertificateCallback =
               (X509Certificate cert, String host, int port) {
-                DebugLogger.log(
-                  'SSL: Bypassing certificate for $host:$port',
-                  tag: 'SSL',
-                );
-                return true; // Accept all certificates in both debug and release
-              };
+            DebugLogger.log(
+              'SSL: Bypassing certificate for $host:$port',
+              tag: 'SSL',
+            );
+            return true; // Accept all certificates in both debug and release
+          };
           return client;
         };
       } catch (e) {
@@ -434,7 +434,8 @@ class ApiService {
     }
 
     final requestData = {
-      'id_loc': idLoc,
+      'id_loc':
+          idLoc, // Keep as string (can be empty string or location ID as string)
       'str': str,
       'nr_dom': nrDom,
       'rol': rol,
@@ -516,11 +517,22 @@ class ApiService {
         );
       }
 
+      // Get JWT token and validate it's not empty
+      final jwtToken = _getJWTToken();
+      if (jwtToken.isEmpty) {
+        throw Exception('JWT token is missing. Please login again.');
+      }
+
       final response = await _dio.post(
         '/idexroluri.php',
         data: requestData,
         options: Options(
-          headers: {'Authorization': 'Bearer ${_getJWTToken()}'},
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'PostmanRuntime/7.32.3',
+            'Authorization': 'Bearer $jwtToken',
+          },
         ),
       );
 
@@ -728,10 +740,8 @@ class ApiService {
   }
 
   static String? decript5(String str, String pass) {
-    String base64 = str
-        .replaceAll('-', '+')
-        .replaceAll('_', '/')
-        .replaceAll('~', '=');
+    String base64 =
+        str.replaceAll('-', '+').replaceAll('_', '/').replaceAll('~', '=');
     var data = base64Decode(base64);
     if (data.length < 16) return null;
     final iv = encrypt.IV(data.sublist(0, 16));

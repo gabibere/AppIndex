@@ -759,9 +759,6 @@ class DeviceService {
 
   // Get device identifier for API calls (installation UUID for production, mock for testing)
   static Future<String> getDeviceIdentifier() async {
-    // RELEASE MODE: Use static UUID for specific releases (uncomment line below when needed)
-    // return 'da8a0b2aeba431afb40740415fe079b0';
-
     // TESTING MODE: Use static UUID for testing (uncomment line below)
     return 'b40a5047f6deac2dd337ec0292c44db2';
 

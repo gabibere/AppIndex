@@ -191,10 +191,12 @@ class _WorkModalState extends State<WorkModal> {
                         return Column(
                           children: [
                             _buildTaxContainer(
-                              _getTaxDisplayName(tax.numeTaxa),
+                              tax.numeTaxa, // Use actual tax name from database
                               taxType,
                               _getTaxIcon(taxType),
                               tax.unitMasura,
+                              tax:
+                                  tax, // Pass tax object to access inactiva and perioada_index
                             ),
                             const SizedBox(height: 16),
                           ],
@@ -317,27 +319,41 @@ class _WorkModalState extends State<WorkModal> {
     String title,
     String taxType,
     IconData icon,
-    String unit,
-  ) {
+    String unit, {
+    Tax? tax, // Optional tax object to access inactiva and perioada_index
+  }) {
     final hasError = _fieldErrors[taxType] ?? false;
     final isSaved = _isSaved[taxType] ?? false;
+    final isInactive = tax?.isInactive ?? false;
+    final perioadaIndex = tax?.perioadaIndex ?? '';
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isInactive
+            ? const Color(AppConfig.errorColor).withValues(alpha: 0.05)
+            : Colors.white,
         borderRadius: BorderRadius.circular(AppConfig.borderRadius),
         border: Border.all(
           color: hasError
               ? const Color(AppConfig.errorColor)
-              : const Color(AppConfig.primaryColor).withValues(alpha: 0.1),
-          width: hasError ? 2 : 1,
+              : isInactive
+                  ? const Color(AppConfig.errorColor).withValues(alpha: 0.5)
+                  : const Color(AppConfig.primaryColor).withValues(alpha: 0.1),
+          width: hasError
+              ? 2
+              : isInactive
+                  ? 2
+                  : 1,
         ),
         boxShadow: [
           BoxShadow(
             color: hasError
                 ? const Color(AppConfig.errorColor).withValues(alpha: 0.1)
-                : const Color(AppConfig.primaryColor).withValues(alpha: 0.05),
+                : isInactive
+                    ? const Color(AppConfig.errorColor).withValues(alpha: 0.15)
+                    : const Color(AppConfig.primaryColor)
+                        .withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -352,14 +368,18 @@ class _WorkModalState extends State<WorkModal> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(
-                    AppConfig.primaryColor,
-                  ).withValues(alpha: 0.1),
+                  color: isInactive
+                      ? const Color(AppConfig.errorColor).withValues(alpha: 0.1)
+                      : const Color(
+                          AppConfig.primaryColor,
+                        ).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   icon,
-                  color: const Color(AppConfig.primaryColor),
+                  color: isInactive
+                      ? const Color(AppConfig.errorColor)
+                      : const Color(AppConfig.primaryColor),
                   size: 20,
                 ),
               ),
@@ -370,12 +390,42 @@ class _WorkModalState extends State<WorkModal> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: const Color(AppConfig.textColor),
+                    color: isInactive
+                        ? const Color(AppConfig.errorColor)
+                        : const Color(AppConfig.textColor),
                   ),
                 ),
               ),
-              if (isSaved)
+              // Inactive badge
+              if (isInactive)
                 Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(AppConfig.errorColor),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.warning, color: Colors.white, size: 12),
+                      const SizedBox(width: 4),
+                      Text(
+                        'INACTIVĂ',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (isSaved && !isInactive)
+                Container(
+                  margin: const EdgeInsets.only(left: 8),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 4,
@@ -402,6 +452,39 @@ class _WorkModalState extends State<WorkModal> {
                 ),
             ],
           ),
+          // Perioada Index display
+          if (perioadaIndex.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(AppConfig.backgroundColor),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(AppConfig.primaryColor)
+                      .withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    size: 14,
+                    color: const Color(AppConfig.primaryColor),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Perioada Index: $perioadaIndex',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(AppConfig.textColor),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           const SizedBox(height: 16),
 
@@ -570,7 +653,7 @@ class _WorkModalState extends State<WorkModal> {
               children: [
                 // Type dropdown
                 Expanded(
-                  flex: 2,
+                  flex: 1,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
@@ -619,7 +702,7 @@ class _WorkModalState extends State<WorkModal> {
 
                 // Value input
                 Expanded(
-                  flex: 3,
+                  flex: 1,
                   child: _buildValueInput(taxType, hasError, unit),
                 ),
               ],
@@ -753,6 +836,12 @@ class _WorkModalState extends State<WorkModal> {
   }
 
   void _showSaveConfirmation(String taxType, String value) async {
+    // Get actual tax name from database
+    final tax = _findTaxForType(taxType);
+    final taxName = tax?.numeTaxa.isNotEmpty == true
+        ? tax!.numeTaxa
+        : _getTaxTypeTranslation(taxType);
+
     final bool? shouldSave = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -778,7 +867,7 @@ class _WorkModalState extends State<WorkModal> {
               child: Text(
                 LocalizationService.getString(
                   'work.save_reading_title',
-                  params: {'type': _getTaxTypeTranslation(taxType)},
+                  params: {'type': taxName},
                 ),
                 style: const TextStyle(
                   fontSize: 18,
@@ -914,8 +1003,12 @@ class _WorkModalState extends State<WorkModal> {
           _readingControllers[taxType]!.clear();
         });
 
-        // Show success message
-        _showSuccessMessage('Citirea a fost salvată cu succes!');
+        // Show success message with actual tax name
+        final taxName = tax.numeTaxa.isNotEmpty
+            ? tax.numeTaxa
+            : _getTaxTypeTranslation(taxType);
+        _showSuccessMessage(
+            'Citirea pentru $taxName a fost salvată cu succes!');
 
         // Refresh data to get updated values from server
         widget.onDataUpdated?.call();
@@ -1032,26 +1125,6 @@ class _WorkModalState extends State<WorkModal> {
       return '${date.day}/${date.month}/${date.year}';
     } catch (e) {
       return apiDate; // Return as-is if parsing fails
-    }
-  }
-
-  /// Get display name for tax from API name
-  String _getTaxDisplayName(String apiName) {
-    switch (apiName.toLowerCase()) {
-      case 'apa':
-        return 'Apa';
-      case 'curent':
-        return 'Curent';
-      case 'gaz':
-        return 'Gaz';
-      case 'impozit':
-        return 'Impozit';
-      case 'incalzire':
-        return 'Încălzire';
-      case 'internet':
-        return 'Internet';
-      default:
-        return apiName; // Return as-is if no mapping
     }
   }
 
@@ -1272,6 +1345,10 @@ class _WorkModalState extends State<WorkModal> {
     final newValueInt = int.tryParse(newValue) ?? 0;
     final difference = newValueInt - oldValue;
     final unit = tax.unitMasura;
+    // Use actual tax name from database
+    final taxName = tax.numeTaxa.isNotEmpty
+        ? tax.numeTaxa
+        : _getTaxTypeTranslation(taxType);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1305,7 +1382,7 @@ class _WorkModalState extends State<WorkModal> {
               ),
               const SizedBox(width: 8),
               Text(
-                _getTaxTypeTranslation(taxType),
+                taxName,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
