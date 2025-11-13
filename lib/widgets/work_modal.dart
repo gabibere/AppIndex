@@ -28,6 +28,10 @@ class _WorkModalState extends State<WorkModal> {
   final Map<String, String> _lastDates = {};
   final Map<String, String> _lastTypes = {};
 
+  // Overlay entries for messages above modal
+  OverlayEntry? _successOverlay;
+  OverlayEntry? _errorOverlay;
+
   // Validation state
   final Map<String, bool> _fieldErrors = {};
 
@@ -134,6 +138,10 @@ class _WorkModalState extends State<WorkModal> {
 
   @override
   void dispose() {
+    // Clean up overlays if still showing
+    _removeSuccessOverlay();
+    _removeErrorOverlay();
+
     // Dispose text controllers
     for (final controller in _readingControllers.values) {
       controller.dispose();
@@ -1196,24 +1204,126 @@ class _WorkModalState extends State<WorkModal> {
 
   /// Show error message
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: const Color(AppConfig.errorColor),
-        duration: const Duration(seconds: 3),
+    // Remove existing overlays if any
+    _removeSuccessOverlay();
+    _removeErrorOverlay();
+
+    // Create overlay entry to show error above modal
+    _errorOverlay = OverlayEntry(
+      builder: (context) => Positioned(
+        bottom: MediaQuery.of(context).padding.bottom + 20,
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(AppConfig.errorColor),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
+
+    // Insert overlay
+    Overlay.of(context).insert(_errorOverlay!);
+
+    // Remove after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      _removeErrorOverlay();
+    });
+  }
+
+  void _removeErrorOverlay() {
+    _errorOverlay?.remove();
+    _errorOverlay = null;
   }
 
   /// Show success message
   void _showSuccessMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: const Color(AppConfig.successColor),
-        duration: const Duration(seconds: 2),
+    // Remove existing overlays if any
+    _removeSuccessOverlay();
+    _removeErrorOverlay();
+
+    // Create overlay entry to show message above modal
+    _successOverlay = OverlayEntry(
+      builder: (context) => Positioned(
+        bottom: MediaQuery.of(context).padding.bottom + 20,
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(AppConfig.successColor),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
+
+    // Insert overlay
+    Overlay.of(context).insert(_successOverlay!);
+
+    // Remove after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      _removeSuccessOverlay();
+    });
+  }
+
+  void _removeSuccessOverlay() {
+    _successOverlay?.remove();
+    _successOverlay = null;
   }
 
   /// Update value field when reading type changes

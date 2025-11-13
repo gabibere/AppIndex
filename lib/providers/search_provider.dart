@@ -8,11 +8,16 @@ class SearchProvider with ChangeNotifier {
   List<Role> _searchResults = [];
   bool _isLoading = false;
   bool _isSearching = false;
+  bool _isLoadingMore = false; // Loading state for "load more" pagination
   String _searchQuery = '';
   String? _selectedLocation;
   String? _error;
   bool _hasMoreData = true;
   bool _hasSearched = false; // Track if a search has been performed
+
+  // Pagination state - display only first 50, then load more
+  int _displayedCount = 50;
+  static const int _itemsPerPage = 50;
 
   // Last search parameters for refresh
   String? _lastIdLoc;
@@ -22,8 +27,25 @@ class SearchProvider with ChangeNotifier {
 
   // Getters
   List<Role> get searchResults => _searchResults;
+
+  // Get only displayed results (paginated)
+  List<Role> get displayedResults {
+    if (_searchResults.length <= _displayedCount) {
+      return _searchResults;
+    }
+    return _searchResults.take(_displayedCount).toList();
+  }
+
+  // Check if there are more results to display
+  bool get hasMoreResultsToDisplay => _searchResults.length > _displayedCount;
+
+  // Get total count and displayed count info
+  int get totalResultsCount => _searchResults.length;
+  int get displayedResultsCount => displayedResults.length;
+
   bool get isLoading => _isLoading;
   bool get isSearching => _isSearching;
+  bool get isLoadingMore => _isLoadingMore;
   String get searchQuery => _searchQuery;
   String? get selectedLocation => _selectedLocation;
   String? get error => _error;
@@ -56,10 +78,14 @@ class SearchProvider with ChangeNotifier {
 
     if (clearPrevious) {
       _searchResults.clear();
+      _displayedCount = _itemsPerPage; // Reset to first 50
       _hasMoreData = true;
+      // Notify immediately to show loading state
+      notifyListeners();
+    } else {
+      // Notify to show loading state even when appending
+      notifyListeners();
     }
-
-    notifyListeners();
 
     try {
       DebugLogger.api('🔍 [SEARCH_PROVIDER] Initializing API service...');
@@ -142,9 +168,30 @@ class SearchProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Load more results to display (pagination)
+  Future<void> loadMoreResults() async {
+    if (hasMoreResultsToDisplay && !_isLoadingMore) {
+      _isLoadingMore = true;
+      notifyListeners();
+
+      // Simulate a small delay to show loading indicator (results are already loaded)
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      _displayedCount += _itemsPerPage;
+      _isLoadingMore = false;
+      notifyListeners();
+
+      DebugLogger.search(
+        '🔍 [SEARCH_PROVIDER] Loaded more results: showing $_displayedCount of ${_searchResults.length}',
+      );
+    }
+  }
+
   // Clear search
   void clearSearch() {
     _searchResults.clear();
+    _displayedCount = _itemsPerPage; // Reset to first 50
+    _isLoadingMore = false; // Reset loading more state
     _searchQuery = '';
     _selectedLocation = null;
     _hasMoreData = true;

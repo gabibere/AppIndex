@@ -23,6 +23,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   late Animation<Offset> _slideAnimation;
   late ScrollController _scrollController;
   final GlobalKey _resultsSectionKey = GlobalKey();
+  final GlobalKey _searchSectionKey = GlobalKey();
 
   @override
   void initState() {
@@ -61,14 +62,24 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   void _scrollToResults() {
-    if (_resultsSectionKey.currentContext != null) {
-      Scrollable.ensureVisible(
-        _resultsSectionKey.currentContext!,
-        duration: const Duration(milliseconds: 800),
-        curve: Curves.easeInOut,
-        alignment: 0.1, // Scroll so results section is near the top
-      );
-    }
+    // Wait a bit for the results to render, then scroll to top
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_resultsSectionKey.currentContext != null) {
+        Scrollable.ensureVisible(
+          _resultsSectionKey.currentContext!,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOut,
+          alignment: 0.0, // Scroll so results section is at the very top
+        );
+      } else if (_scrollController.hasClients) {
+        // Fallback: scroll to top of the scroll view
+        _scrollController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   void _performDataRefresh(SearchProvider searchProvider) {
@@ -176,6 +187,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
                 // Search Section
                 SearchSection(
+                  key: _searchSectionKey,
                   onSearchTriggered: _scrollToResults,
                 ),
 
@@ -186,10 +198,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                   builder: (context, searchProvider, child) {
                     return ResultsSection(
                       key: _resultsSectionKey,
-                      roles: searchProvider.searchResults,
+                      roles: searchProvider.displayedResults,
                       isLoading: searchProvider.isSearching,
                       error: searchProvider.error,
                       hasSearched: searchProvider.hasSearched,
+                      hasMoreResultsToDisplay:
+                          searchProvider.hasMoreResultsToDisplay,
+                      totalResultsCount: searchProvider.totalResultsCount,
+                      isLoadingMore: searchProvider.isLoadingMore,
                       onRetry: () {
                         // Retry with last search parameters if available
                         // You may need to store search parameters in SearchProvider
@@ -197,6 +213,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                       onDataRefresh: () {
                         // Refresh data by performing the same search again
                         _performDataRefresh(searchProvider);
+                      },
+                      onLoadMore: () {
+                        searchProvider.loadMoreResults();
                       },
                     );
                   },

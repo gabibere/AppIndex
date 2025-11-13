@@ -11,6 +11,10 @@ class ResultsSection extends StatelessWidget {
   final VoidCallback? onRetry;
   final bool hasSearched;
   final VoidCallback? onDataRefresh;
+  final bool hasMoreResultsToDisplay;
+  final int totalResultsCount;
+  final VoidCallback? onLoadMore;
+  final bool isLoadingMore;
 
   const ResultsSection({
     super.key,
@@ -20,10 +24,15 @@ class ResultsSection extends StatelessWidget {
     this.onRetry,
     this.hasSearched = false,
     this.onDataRefresh,
+    this.hasMoreResultsToDisplay = false,
+    this.totalResultsCount = 0,
+    this.onLoadMore,
+    this.isLoadingMore = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Always show loading state when loading (even if there are previous results)
     if (isLoading) {
       return _buildLoadingState();
     }
@@ -195,7 +204,9 @@ class ResultsSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '${roles.length} ${LocalizationService.getString('results.found')}',
+                totalResultsCount > 0
+                    ? '$totalResultsCount ${LocalizationService.getString('results.found')}'
+                    : '${roles.length} ${LocalizationService.getString('results.found')}',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -219,6 +230,65 @@ class ResultsSection extends StatelessWidget {
             );
           },
         ),
+
+        // Show more button or loading indicator (if there are more results to display)
+        if (hasMoreResultsToDisplay && onLoadMore != null) ...[
+          const SizedBox(height: 16),
+          if (isLoadingMore)
+            // Loading indicator when loading more
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Column(
+                children: [
+                  const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(AppConfig.primaryColor),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    LocalizationService.getString('results.loading_more'),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(AppConfig.textSecondaryColor),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            // Show more button
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: onLoadMore,
+                icon: const Icon(Icons.expand_more, size: 20),
+                label: Text(
+                  LocalizationService.getString('results.show_more'),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(AppConfig.primaryColor),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(height: 8),
+          if (!isLoadingMore)
+            Text(
+              '${roles.length} / $totalResultsCount ${LocalizationService.getString('results.displayed')}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(AppConfig.textSecondaryColor),
+              ),
+            ),
+        ],
       ],
     );
   }

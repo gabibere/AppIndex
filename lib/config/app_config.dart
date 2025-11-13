@@ -56,12 +56,4 @@ class AppConfig {
   // Mock Data Settings
   static const bool useMockData = false;
   static const bool enableMockAuth = false;
-
-  // Test Credentials for Development
-  static const Map<String, String> testCredentials = {
-    'admin': 'admin123',
-    'user': 'user123',
-    'reader': 'reader123',
-    'manager': 'manager123',
-  };
 }

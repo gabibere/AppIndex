@@ -51,7 +51,8 @@
     "help_tip": "💡 Sfat: Folosiți butonul de locație pentru a completa automat adresa curentă!",
     "got_it": "Am înțeles",
     "how_to_search": "Cum să căutați",
-    "get_location": "Obține locația curentă"
+    "get_location": "Obține locația curentă",
+    "back_to_search": "Căutare"
   },
   "location": {
     "services_disabled": "Serviciile de locație sunt dezactivate",
@@ -75,7 +76,10 @@
     "search_results": "Rezultate căutare",
     "found": "găsite",
     "floors": "etaje",
-    "apartments": "apartamente"
+    "apartments": "apartamente",
+    "show_more": "Arată mai multe",
+    "displayed": "afișate",
+    "loading_more": "Se încarcă mai multe rezultate..."
   },
   "work": {
     "electricity": "Electricitate",
