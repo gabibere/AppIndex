@@ -1012,11 +1012,8 @@ class _WorkModalState extends State<WorkModal> {
         });
 
         // Show success message with actual tax name
-        final taxName = tax.numeTaxa.isNotEmpty
-            ? tax.numeTaxa
-            : _getTaxTypeTranslation(taxType);
-        _showSuccessMessage(
-            'Citirea pentru $taxName a fost salvată cu succes!');
+        // Display exact success message from API response
+        _showSuccessMessage(response.msgErr);
 
         // Refresh data to get updated values from server
         widget.onDataUpdated?.call();
@@ -1025,13 +1022,8 @@ class _WorkModalState extends State<WorkModal> {
           '✅ [WORK_MODAL] Reading saved successfully: ${response.msgErr}',
         );
       } else {
-        // API error
-        _showError(
-          ErrorHandlingService.getApiErrorMessage({
-            'err': response.err,
-            'msg_err': response.msgErr,
-          }),
-        );
+        // Display exact error message from API response
+        _showError(response.msgErr);
         DebugLogger.error('❌ [WORK_MODAL] API error: ${response.msgErr}');
       }
     } catch (e) {

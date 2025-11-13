@@ -36,9 +36,10 @@ class ApiService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        // Handle SSL certificate issues for development
+        // Accept all status codes so we can read response body even for errors
+        // We'll check the 'err' field in the JSON response to determine success/error
         validateStatus: (status) {
-          return status != null && status < 500;
+          return status != null; // Accept all status codes
         },
       ),
     );
@@ -659,30 +660,168 @@ class ApiService {
         ),
       );
 
+      if (AppConfig.showDebugInfo) {
+        DebugLogger.api('🔐 [API] === ADD READING RESPONSE ===');
+        DebugLogger.api('🔐 [API] Status Code: ${response.statusCode}');
+        DebugLogger.api(
+            '🔐 [API] Response Data Type: ${response.data.runtimeType}');
+      }
+
       Map<String, dynamic> responseData;
       if (response.data is String) {
-        try {
-          responseData = json.decode(response.data);
-        } catch (e) {
+        final responseString = response.data as String;
+        if (responseString.isEmpty) {
+          if (AppConfig.showDebugInfo) {
+            DebugLogger.error('❌ [API] Response body is empty string');
+          }
           responseData = {
             'session': requestData['session'],
             'err': 1,
-            'msg_err': 'Invalid response format',
+            'msg_err': 'Eroare de server',
+          };
+        } else {
+          try {
+            responseData = json.decode(responseString);
+            if (AppConfig.showDebugInfo) {
+              DebugLogger.api('🔐 [API] Parsed JSON Response:');
+              _printFormattedJson(responseString);
+            }
+          } catch (e) {
+            if (AppConfig.showDebugInfo) {
+              DebugLogger.error('❌ [API] Error parsing JSON: $e');
+              DebugLogger.api('🔐 [API] Raw response: $responseString');
+            }
+            responseData = {
+              'session': requestData['session'],
+              'err': 1,
+              'msg_err': 'Eroare de server',
+            };
+          }
+        }
+      } else if (response.data == null) {
+        // Response data is null
+        if (AppConfig.showDebugInfo) {
+          DebugLogger.error('❌ [API] Response data is null');
+        }
+        responseData = {
+          'session': requestData['session'],
+          'err': 1,
+          'msg_err': 'Eroare de server',
+        };
+      } else {
+        try {
+          responseData = response.data;
+          if (AppConfig.showDebugInfo) {
+            DebugLogger.api('🔐 [API] Response (non-string):');
+            _printFormattedJson(json.encode(responseData));
+          }
+        } catch (e) {
+          if (AppConfig.showDebugInfo) {
+            DebugLogger.error('❌ [API] Error processing response: $e');
+          }
+          responseData = {
+            'session': requestData['session'],
+            'err': 1,
+            'msg_err': 'Eroare de server',
           };
         }
-      } else {
-        responseData = response.data;
       }
 
       final addResponse = AddResponse.fromJson(responseData);
 
       if (AppConfig.showDebugInfo) {
-        DebugLogger.api('🔐 [API] === ADD READING RESPONSE ===');
-        DebugLogger.api('🔐 [API] Status: ${response.statusCode}');
+        DebugLogger.api('🔐 [API] === PARSED ADD READING RESPONSE ===');
         _printFormattedJson(json.encode(addResponse.toJson()));
       }
 
       return addResponse;
+    } on DioException catch (e) {
+      // Log the raw response body for debugging
+      if (AppConfig.showDebugInfo) {
+        DebugLogger.api('🔐 [API] === ADD READING ERROR RESPONSE ===');
+        DebugLogger.api('🔐 [API] Status Code: ${e.response?.statusCode}');
+
+        // Log raw response data
+        if (e.response != null) {
+          final responseData = e.response!.data;
+          DebugLogger.api(
+              '🔐 [API] Response Data Type: ${responseData.runtimeType}');
+
+          if (responseData is String) {
+            DebugLogger.api('🔐 [API] Raw Response Body (String):');
+            if (responseData.isEmpty) {
+              DebugLogger.api('   ⚠️ EMPTY STRING');
+            } else {
+              DebugLogger.api('   $responseData');
+              // Try to format as JSON if possible
+              try {
+                json.decode(responseData);
+                DebugLogger.api('🔐 [API] Parsed JSON Response:');
+                _printFormattedJson(responseData);
+              } catch (_) {
+                // Not JSON, already logged as string
+              }
+            }
+          } else if (responseData != null) {
+            DebugLogger.api('🔐 [API] Raw Response Body:');
+            try {
+              _printFormattedJson(json.encode(responseData));
+            } catch (jsonError) {
+              DebugLogger.api('   $responseData');
+            }
+          } else {
+            DebugLogger.api('   ⚠️ Response data is NULL');
+          }
+        } else {
+          DebugLogger.api('   ⚠️ No response object in DioException');
+        }
+        DebugLogger.api('   ---');
+      }
+
+      // Try to extract msg_err from error response body
+      if (e.response != null && e.response!.data != null) {
+        try {
+          Map<String, dynamic>? errorData;
+          if (e.response!.data is String) {
+            final responseString = e.response!.data as String;
+            if (responseString.isEmpty) {
+              if (AppConfig.showDebugInfo) {
+                DebugLogger.error('❌ [API] Response body is empty string');
+              }
+            } else {
+              errorData = json.decode(responseString) as Map<String, dynamic>;
+            }
+          } else {
+            errorData = e.response!.data as Map<String, dynamic>?;
+          }
+
+          // If we have msg_err in the error response, return it
+          if (errorData != null && errorData.containsKey('msg_err')) {
+            final addResponse = AddResponse(
+              session: requestData['session'].toString(),
+              err: errorData['err'] ?? 1,
+              msgErr: errorData['msg_err']?.toString() ?? 'Eroare necunoscută',
+            );
+
+            if (AppConfig.showDebugInfo) {
+              DebugLogger.api('🔐 [API] === PARSED ERROR RESPONSE ===');
+              _printFormattedJson(json.encode(addResponse.toJson()));
+            }
+
+            return addResponse;
+          }
+        } catch (parseError) {
+          if (AppConfig.showDebugInfo) {
+            DebugLogger.error(
+                '❌ [API] Error parsing error response: $parseError');
+          }
+        }
+      }
+
+      if (AppConfig.showDebugInfo) {
+        DebugLogger.error('❌ [API] Add reading error: $e');
+      }
+      rethrow;
     } catch (e) {
       if (AppConfig.showDebugInfo) {
         DebugLogger.error('❌ [API] Add reading error: $e');

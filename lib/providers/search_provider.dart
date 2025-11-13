@@ -130,12 +130,8 @@ class SearchProvider with ChangeNotifier {
         DebugLogger.search(
           '🔍 [SEARCH_PROVIDER] Search failed: ${response.msgErr}',
         );
-        _setError(
-          ErrorHandlingService.getApiErrorMessage({
-            'err': response.err,
-            'msg_err': response.msgErr,
-          }),
-        );
+        // Display exact error message from API response
+        _setError(response.msgErr);
       }
     } catch (e) {
       _setError(ErrorHandlingService.getFriendlyErrorMessage(e));

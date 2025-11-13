@@ -101,20 +101,12 @@ class ResultsSection extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              LocalizationService.getString('results.search_failed'),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(AppConfig.textColor),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
               error!,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: const Color(AppConfig.textSecondaryColor),
-                fontSize: 14,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(AppConfig.textColor),
               ),
             ),
             const SizedBox(height: 16),
